@@ -90,6 +90,7 @@ const verifyWebhook = async (req, res) => {
 // Controller to handle incoming WhatsApp messages (POST)
 const receiveMessage = (req, res) => {
   const data = req.body;
+  console.log("Inside receiveMessage function");
 
   if (data.object === 'whatsapp_business_account') {
     data.entry.forEach((entry) => {
