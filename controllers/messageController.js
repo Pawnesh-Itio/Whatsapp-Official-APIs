@@ -96,14 +96,8 @@ const receiveMessage = (req, res) => {
       const changes = entry.changes;
       changes.forEach((change) => {
         if (change.field === 'messages') {
-          // Send the entire message object to CodeIgniter
-          axios.post('http://localhost/perfex_crm/wa-server', message)
-            .then(response => {
-              console.log('Message sent to CodeIgniter:', response.data);
-            })
-            .catch(error => {
-              console.error('Error sending message to CodeIgniter:', error.message);
-            });
+          const message = change.value.messages[0];
+          
           console.log('Received message:', message);
         }
       });
