@@ -1,5 +1,6 @@
 const axios = require('axios');
 const configurationModel = require('../models/configurationModel');
+const WebhookData = require('../models/webhookModel');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
     const {userId, accessToken, phoneNumberId, type, to, message, tempName} = req.body; // Required fields to send the message
@@ -88,26 +89,36 @@ const verifyWebhook = async (req, res) => {
 };
 
 // Controller to handle incoming WhatsApp messages (POST)
-const receiveMessage = (req, res) => {
+const receiveMessage = async(req, res) => {
   const data = req.body;
-  console.log("Inside receiveMessage function");
+  try {
+    // Save the data to MongoDB using the WebhookData model
+    const newData = new WebhookData(data);
+    await newData.save(); // Save data to the database
 
-  if (data.object === 'whatsapp_business_account') {
-    data.entry.forEach((entry) => {
-      const changes = entry.changes;
-      changes.forEach((change) => {
-        if (change.field === 'messages') {
-          const message = change.value.messages[0];
-          
-          console.log('Received message:', message);
-        }
-      });
-    });
-
-    res.sendStatus(200);
-  } else {
-    res.sendStatus(400);
+    console.log('Data saved:', newData);
+    res.status(200).send('Webhook received and data saved');
+  } catch (err) {
+    console.error('Error saving data:', err);
+    res.status(500).send('Error saving data');
   }
+
+  // if (data.object === 'whatsapp_business_account') {
+  //   data.entry.forEach((entry) => {
+  //     const changes = entry.changes;
+  //     changes.forEach((change) => {
+  //       if (change.field === 'messages') {
+  //         const message = change.value.messages[0];
+          
+  //         console.log('Received message:', message);
+  //       }
+  //     });
+  //   });
+
+  //   res.sendStatus(200);
+  // } else {
+  //   res.sendStatus(400);
+  // }
 };
 
 module.exports = { sendMessage, verifyWebhook, receiveMessage };
