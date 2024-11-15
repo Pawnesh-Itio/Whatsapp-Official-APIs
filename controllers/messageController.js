@@ -106,18 +106,23 @@ const receiveMessage = async (req, res) => {
             console.log('Received message:', message);
 
             // Initialize form data
-            const formData = {
-              name: contacts.profile.name,
-              from: message.from,
-              id: message.id,
-              timestamp: message.timestamp,
-              text: message.text.body,
-              type: message.type
-            };
-            console.log('Form Data :', formData);
+                const formData = new FormData();
+                formData.append('name', contacts.profile.name);
+                formData.append('from', message.from);
+                formData.append('id', message.id);
+                formData.append('timestamp', message.timestamp);
+                formData.append('text', message.text.body);
+                formData.append('type', message.type);
 
-            // Sending POST request to an external API endpoint
-            const response = await axios.post('https://xeyso.com/crm/wa-server', formData);
+                // Log the form data (you can remove this in production)
+                console.log('Form Data :', formData);
+
+                // Sending POST request to an external API endpoint with form-data
+                const response = await axios.post('https://xeyso.com/crm/wa-server', formData, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data' // Ensure the request is sent as form-data
+                  }
+                });
 
             // Log the response from the external API
             console.log('Response from external API:', response);
