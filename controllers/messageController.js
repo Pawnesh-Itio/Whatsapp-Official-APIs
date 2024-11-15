@@ -93,13 +93,30 @@ const receiveMessage = async(req, res) => {
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;
   // Process incoming message
-  if (data.object === 'whatsapp_business_account') {
+  if (data.object === 'whatsapp_business_account') {  
     data.entry.forEach((entry) => {
       const changes = entry.changes;
       changes.forEach((change) => {
         if (change.field === 'messages') {
           const message = change.value.messages[0];
+          const contacts = change.value.contacts[0];
           console.log('Received message:', message);
+          // Initializing form data.
+          const formData = {
+            name: contacts.profile.name,
+            from: message.from,
+            id: message.id,
+            timestamp: message.timestamp,
+            text: message.text.body,
+            type: message.type
+          };
+          console.log('Form Data :', formData);
+           // Sending POST request to an external API endpoint
+          const response =  axios.post('https://xeyso.com/crm/wa-server', formData);
+          // Sending back the response from the external API
+          console.log(response);
+          // Downtime solution here
+          res.json(response.data);
         }
       });
     });
