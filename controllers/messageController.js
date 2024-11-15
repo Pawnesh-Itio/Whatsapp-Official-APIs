@@ -89,42 +89,53 @@ const verifyWebhook = async (req, res) => {
 };
 
 // Controller to handle incoming WhatsApp messages (POST)
-const receiveMessage = async(req, res) => {
+const receiveMessage = async (req, res) => {
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;
   // Process incoming message
   if (data.object === 'whatsapp_business_account') {  
-    data.entry.forEach((entry) => {
-      const changes = entry.changes;
-      changes.forEach((change) => {
-        if (change.field === 'messages') {
-          const message = change.value.messages[0];
-          const contacts = change.value.contacts[0];
-          console.log('Received message:', message);
-          // Initializing form data.
-          const formData = {
-            name: contacts.profile.name,
-            from: message.from,
-            id: message.id,
-            timestamp: message.timestamp,
-            text: message.text.body,
-            type: message.type
-          };
-          console.log('Form Data :', formData);
-           // Sending POST request to an external API endpoint
-          const response =  axios.post('https://xeyso.com/crm/wa-server', formData);
-          // Sending back the response from the external API
-          console.log(response);
-          // Downtime solution here
-          res.json(response.data);
+    try {
+      // Iterate over each entry
+      for (const entry of data.entry) {
+        const changes = entry.changes;
+        // Iterate over each change
+        for (const change of changes) {
+          if (change.field === 'messages') {
+            const message = change.value.messages[0];
+            const contacts = change.value.contacts[0];
+            console.log('Received message:', message);
+
+            // Initialize form data
+            const formData = {
+              name: contacts.profile.name,
+              from: message.from,
+              id: message.id,
+              timestamp: message.timestamp,
+              text: message.text.body,
+              type: message.type
+            };
+            console.log('Form Data :', formData);
+
+            // Sending POST request to an external API endpoint
+            const response = await axios.post('https://xeyso.com/crm/wa-server', formData);
+
+            // Log the response from the external API
+            console.log('Response from external API:', response);
+
+            // Send the response back to the client
+            return res.json(response.data); // Send response and stop further processing
+          }
         }
-      });
-    });
-    res.sendStatus(200);
+      }
+
+      // If no valid message data is processed, send a 200 status
+      return res.sendStatus(200); 
+    } catch (error) {
+      console.error('Error processing the message:', error);
+      return res.status(500).send('Internal Server Error'); // Handle errors gracefully
+    }
   } else {
-    res.sendStatus(400);
+    return res.sendStatus(400); // Invalid data format, send a 400 status
   }
-
 };
-
 module.exports = { sendMessage, verifyWebhook, receiveMessage };
