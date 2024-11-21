@@ -1,14 +1,17 @@
 const mongoose = require('mongoose');
-const webhookDataSchema = new mongoose.Schema({
+const leadsDataSchema = new mongoose.Schema({
     object: String,
     entry: [{
       id: String,
-      changes: [{
-        field: String,
-        value: Object
-      }]
+      name: String,
+      from: String,
+      message_id: String,
+      timestamps: String,
+      type: String,
+      message: String
+
     }]
   }, { timestamps: true });
   
-  module.exports = mongoose.model('WebhookData',webhookDataSchema);
+  module.exports = mongoose.model('leadsData',leadsDataSchema);
   

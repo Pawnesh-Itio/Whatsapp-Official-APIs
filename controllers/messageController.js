@@ -92,6 +92,7 @@ const verifyWebhook = async (req, res) => {
 const receiveMessage = async (req, res) => {
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;
+  console.log(data);
   // Process incoming message
   if (data.object === 'whatsapp_business_account') {  
     try {
@@ -114,25 +115,46 @@ const receiveMessage = async (req, res) => {
                 formData.append('text', message.text.body);
                 formData.append('type', message.type);
 
-                // Log the form data (you can remove this in production)
-                console.log('Form Data :', formData);
-
-                // Sending POST request to an external API endpoint with form-data
-                const response = await axios.post('https://xeyso.com/crm/wa-server', formData, {
-                  headers: {
-                    'Content-Type': 'multipart/form-data' // Ensure the request is sent as form-data
+            // Initializing mongoss data
+                const documentToInsert = {
+                  name: contacts.profile.name,
+                  from: message.from,
+                  message_id: message.id,
+                  timestamp: message.timestamp,
+                  type:message.type,
+                  message:message.text.body
+                };
+                try{
+                  const leadData = await WebhookData.findOne({ from: documentToInsert.from });
+                  if(leadData){
+                    console.log("Lead Exist: Add socket logic here...");
+                  }else{
+                    console.log("Lead Not Exist: Add Insertion logic here");
+                    const newLead = new WebhookData(documentToInsert);
+                    await newLead.save();
+                     // Log the form data.
+                     console.log('Form Data :', formData);
+                     // Sending POST request to an external API endpoint with form-data
+                     const response = await axios.post('https://xeyso.com/crm/wa-server', formData, {
+                      headers: {
+                        'Content-Type': 'multipart/form-data' // Ensure the request is sent as form-data
+                        }
+                      });
+                      const { message, status } = response.data;
+                      // Log the response from the external API
+                      console.log('Response from external API:',` Message: ${message} Status: ${status}`);
+                      // Revert to the person with automated message.
+                      
+                      // Send the response back to the client
+                      return res.json(response.data); // Send response and stop further processing
                   }
-                });
-
-            // Log the response from the external API
-            console.log('Response from external API:', response);
-
-            // Send the response back to the client
-            return res.json(response.data); // Send response and stop further processing
+                } catch (err) {
+                  console.error('Error:', err);
+                  res.status(500).send('Server error');
+                }
           }
         }
       }
-
       // If no valid message data is processed, send a 200 status
       return res.sendStatus(200); 
     } catch (error) {
