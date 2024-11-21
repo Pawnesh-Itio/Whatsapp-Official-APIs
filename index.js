@@ -17,9 +17,12 @@ const server = http.createServer(app);
 // Initialize Socket.io on the same server
 const io = socketIo(server, {
   cors: {
-    origin: '*', // Allow Laravel frontend origin or specify your frontend URL
+    origin: '*', // Allow all origins to connect
     methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],  // Add allowed headers if needed
+    credentials: true,
   },
+  transports: ['websocket', 'polling'],  // Allow both WebSocket and polling
 });
 
 // Use CORS middleware
