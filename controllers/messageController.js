@@ -105,8 +105,9 @@ const receiveMessage = async (req, res) => {
           console.log(changes);
           
           if (change.field === 'messages') {
-            const message = change.value.messages[0];
-            const contacts = change.value.contacts[0];
+           // Check if messages and contacts arrays exist and have at least one element
+          const message = change.value.messages && change.value.messages[0];
+          const contacts = change.value.contacts && change.value.contacts[0];
             console.log('Received message:', message);
   
             // Initialize form data for sending message
