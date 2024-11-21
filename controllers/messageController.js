@@ -92,7 +92,7 @@ const verifyWebhook = async (req, res) => {
 const receiveMessage = async (req, res) => {
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;
-  console.log(data);
+  console.log(JSON.stringify(data, null, 2));
   // Process incoming message
   // if (data.object === 'whatsapp_business_account') {  
   //   try {
