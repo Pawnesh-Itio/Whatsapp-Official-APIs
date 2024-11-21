@@ -94,83 +94,83 @@ const receiveMessage = async (req, res) => {
   const data = req.body;
   console.log(data);
   // Process incoming message
-  if (data.object === 'whatsapp_business_account') {  
-    try {
-      // Iterate over each entry
-      for (const entry of data.entry) {
-        const changes = entry.changes;
-        // Iterate over each change
-        console.log(changes);
-        for (const change of changes) {
-          console.log(changes);
+  // if (data.object === 'whatsapp_business_account') {  
+  //   try {
+  //     // Iterate over each entry
+  //     for (const entry of data.entry) {
+  //       const changes = entry.changes;
+  //       // Iterate over each change
+  //       console.log(changes);
+  //       for (const change of changes) {
+  //         console.log(changes);
           
-          if (change.field === 'messages') {
-           // Check if messages and contacts arrays exist and have at least one element
-          const message = change.value.messages && change.value.messages[0];
-          const contacts = change.value.contacts && change.value.contacts[0];
-            console.log('Received message:', message);
+  //         if (change.field === 'messages') {
+  //          // Check if messages and contacts arrays exist and have at least one element
+  //         const message = change.value.messages && change.value.messages[0];
+  //         const contacts = change.value.contacts && change.value.contacts[0];
+  //           console.log('Received message:', message);
   
-            // Initialize form data for sending message
-            const formData = new FormData();
-            formData.append('name', contacts.profile.name);
-            formData.append('from', message.from);
-            formData.append('id', message.id);
-            formData.append('timestamp', message.timestamp);
-            formData.append('text', message.text.body);
-            formData.append('type', message.type);
+  //           // Initialize form data for sending message
+  //           const formData = new FormData();
+  //           formData.append('name', contacts.profile.name);
+  //           formData.append('from', message.from);
+  //           formData.append('id', message.id);
+  //           formData.append('timestamp', message.timestamp);
+  //           formData.append('text', message.text.body);
+  //           formData.append('type', message.type);
   
-            // Initializing mongoose data
-            const documentToInsert = {
-              name: contacts.profile.name,
-              from: message.from,
-              message_id: message.id,
-              timestamp: message.timestamp,
-              type: message.type,
-              message: message.text.body
-            };
+  //           // Initializing mongoose data
+  //           const documentToInsert = {
+  //             name: contacts.profile.name,
+  //             from: message.from,
+  //             message_id: message.id,
+  //             timestamp: message.timestamp,
+  //             type: message.type,
+  //             message: message.text.body
+  //           };
   
-            // Handle incoming messages (received messages)
-            if (message.status === 'received') {
-              try {
-                // Check if the lead already exists in the database
-                const leadData = await WebhookData.findOne({ from: documentToInsert.from });
-                if (leadData) {
-                  console.log("Lead exists: Just show new message.");
-                  // Emit the message notification for an existing lead
-                  const io = req.app.get('io');  // Get the Socket.io instance
-                  io.emit('newMessageNotification', { documentToInsert, message: 'New message from existing lead.' });
-                } else {
-                  console.log("Lead does not exist: Create new lead and show message.");
-                  // Insert new lead if it doesn't exist
-                  const newLead = new WebhookData(documentToInsert);
-                  await newLead.save();
+  //           // Handle incoming messages (received messages)
+  //           if (message.status === 'received') {
+  //             try {
+  //               // Check if the lead already exists in the database
+  //               const leadData = await WebhookData.findOne({ from: documentToInsert.from });
+  //               if (leadData) {
+  //                 console.log("Lead exists: Just show new message.");
+  //                 // Emit the message notification for an existing lead
+  //                 const io = req.app.get('io');  // Get the Socket.io instance
+  //                 io.emit('newMessageNotification', { documentToInsert, message: 'New message from existing lead.' });
+  //               } else {
+  //                 console.log("Lead does not exist: Create new lead and show message.");
+  //                 // Insert new lead if it doesn't exist
+  //                 const newLead = new WebhookData(documentToInsert);
+  //                 await newLead.save();
                   
-                  // Emit the message notification for a new lead
-                  const io = req.app.get('io');
-                  io.emit('newMessageNotification', { documentToInsert, message: 'New message from a new lead.' });
-                }
-              } catch (err) {
-                console.error('Error:', err);
-                res.status(500).send('Server error');
-              }
-            }
+  //                 // Emit the message notification for a new lead
+  //                 const io = req.app.get('io');
+  //                 io.emit('newMessageNotification', { documentToInsert, message: 'New message from a new lead.' });
+  //               }
+  //             } catch (err) {
+  //               console.error('Error:', err);
+  //               res.status(500).send('Server error');
+  //             }
+  //           }
   
-            // Handle sent messages (outgoing messages)
-            if (message.status === 'sent' || message.status === 'delivered') {
-              console.log("Message sent, no lead insertion.");
-              const io = req.app.get('io');  // Get the Socket.io instance
-              io.emit('outgoingMessageNotification', { message: 'Message sent, no lead insertion.' });
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error processing the webhook data:', err);
-      res.status(500).send('Error processing webhook data');
-    }
-  }
-  else {
-    return res.sendStatus(400); // Invalid data format, send a 400 status
-  }
+  //           // Handle sent messages (outgoing messages)
+  //           if (message.status === 'sent' || message.status === 'delivered') {
+  //             console.log("Message sent, no lead insertion.");
+  //             const io = req.app.get('io');  // Get the Socket.io instance
+  //             io.emit('outgoingMessageNotification', { message: 'Message sent, no lead insertion.' });
+  //           }
+  //         }
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error('Error processing the webhook data:', err);
+  //     res.status(500).send('Error processing webhook data');
+  //   }
+  // }
+  // else {
+  //   return res.sendStatus(400); // Invalid data format, send a 400 status
+  // }
 };
 module.exports = { sendMessage, verifyWebhook, receiveMessage };
