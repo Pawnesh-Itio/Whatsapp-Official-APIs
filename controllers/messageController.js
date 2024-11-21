@@ -128,6 +128,9 @@ const receiveMessage = async (req, res) => {
                   const leadData = await WebhookData.findOne({ from: documentToInsert.from });
                   if(leadData){
                     console.log("Lead Exist: Add socket logic here...");
+                    const io = req.app.get('io');  // Get the Socket.io instance
+                    io.emit('newMessageNotification', { documentToInsert, message: 'Lead exists, update or notify.' });
+
                   }else{
                     console.log("Lead Not Exist: Add Insertion logic here");
                     const newLead = new WebhookData(documentToInsert);
