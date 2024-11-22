@@ -128,7 +128,7 @@ const receiveMessage = async (req, res) => {
                     message_type: 'received',
                     message_body: message.text.body,
                     time:message.timestamp,
-                    status: 1
+                    status: 'sent'
                   }
                 try{
                   const findContactData = await contactData.findOne({ from: contactToInsert.from });
