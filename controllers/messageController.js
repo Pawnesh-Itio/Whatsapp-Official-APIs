@@ -1,6 +1,7 @@
 const axios = require('axios');
 const configurationModel = require('../models/configurationModel');
-const WebhookData = require('../models/webhookModel');
+const contactData = require('../models/contactModel');
+const messageModel = require('../models/messageModel');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
     const {userId, accessToken, phoneNumberId, type, to, message, tempName} = req.body; // Required fields to send the message
@@ -92,85 +93,111 @@ const verifyWebhook = async (req, res) => {
 const receiveMessage = async (req, res) => {
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;
-  console.log(JSON.stringify(data, null, 2));
   // Process incoming message
-  // if (data.object === 'whatsapp_business_account') {  
-  //   try {
-  //     // Iterate over each entry
-  //     for (const entry of data.entry) {
-  //       const changes = entry.changes;
-  //       // Iterate over each change
-  //       console.log(changes);
-  //       for (const change of changes) {
-  //         console.log(changes);
-          
-  //         if (change.field === 'messages') {
-  //          // Check if messages and contacts arrays exist and have at least one element
-  //         const message = change.value.messages && change.value.messages[0];
-  //         const contacts = change.value.contacts && change.value.contacts[0];
-  //           console.log('Received message:', message);
-  
-  //           // Initialize form data for sending message
-  //           const formData = new FormData();
-  //           formData.append('name', contacts.profile.name);
-  //           formData.append('from', message.from);
-  //           formData.append('id', message.id);
-  //           formData.append('timestamp', message.timestamp);
-  //           formData.append('text', message.text.body);
-  //           formData.append('type', message.type);
-  
-  //           // Initializing mongoose data
-  //           const documentToInsert = {
-  //             name: contacts.profile.name,
-  //             from: message.from,
-  //             message_id: message.id,
-  //             timestamp: message.timestamp,
-  //             type: message.type,
-  //             message: message.text.body
-  //           };
-  
-  //           // Handle incoming messages (received messages)
-  //           if (message.status === 'received') {
-  //             try {
-  //               // Check if the lead already exists in the database
-  //               const leadData = await WebhookData.findOne({ from: documentToInsert.from });
-  //               if (leadData) {
-  //                 console.log("Lead exists: Just show new message.");
-  //                 // Emit the message notification for an existing lead
-  //                 const io = req.app.get('io');  // Get the Socket.io instance
-  //                 io.emit('newMessageNotification', { documentToInsert, message: 'New message from existing lead.' });
-  //               } else {
-  //                 console.log("Lead does not exist: Create new lead and show message.");
-  //                 // Insert new lead if it doesn't exist
-  //                 const newLead = new WebhookData(documentToInsert);
-  //                 await newLead.save();
-                  
-  //                 // Emit the message notification for a new lead
-  //                 const io = req.app.get('io');
-  //                 io.emit('newMessageNotification', { documentToInsert, message: 'New message from a new lead.' });
-  //               }
-  //             } catch (err) {
-  //               console.error('Error:', err);
-  //               res.status(500).send('Server error');
-  //             }
-  //           }
-  
-  //           // Handle sent messages (outgoing messages)
-  //           if (message.status === 'sent' || message.status === 'delivered') {
-  //             console.log("Message sent, no lead insertion.");
-  //             const io = req.app.get('io');  // Get the Socket.io instance
-  //             io.emit('outgoingMessageNotification', { message: 'Message sent, no lead insertion.' });
-  //           }
-  //         }
-  //       }
-  //     }
-  //   } catch (err) {
-  //     console.error('Error processing the webhook data:', err);
-  //     res.status(500).send('Error processing webhook data');
-  //   }
-  // }
-  // else {
-  //   return res.sendStatus(400); // Invalid data format, send a 400 status
-  // }
+  if (data.object === 'whatsapp_business_account') {  
+    try {
+      // Iterate over each entry
+      for (const entry of data.entry) {
+        const changes = entry.changes;
+        // Iterate over each change
+        for (const change of changes) {
+          if (change.field === 'messages') {
+            // Start Receiving Message
+            if(change.value.message){
+                  const message = change.value.messages[0];
+                  const contacts = change.value.contacts[0];
+                  console.log('Received message:', message);
+                  // Initialize form data
+                  const formData = new FormData();
+                  formData.append('name', contacts.profile.name);
+                  formData.append('from', message.from);
+                  formData.append('id', message.id);
+                  formData.append('timestamp', message.timestamp);
+                  formData.append('text', message.text.body);
+                  formData.append('type', message.type);
+
+                  // Initializing mongoss data
+                  const contactToInsert = {
+                    wa_name: contacts.profile.name,
+                    wa_phone_number: message.from,
+                    wa_id: message.id,
+                    status: 1,
+                  };
+                  const messageToInsert = {
+                    message_id: message.id,
+                    message_type: 'received',
+                    message_body: message.text.body,
+                    time:message.timestamp,
+                    status: 1
+                  }
+                try{
+                  const findContactData = await contactData.findOne({ from: contactToInsert.from });
+                  if(findContactData){
+                    // Insert new messaged
+                    messageToInsert.contactId = findContactData._id;
+                    const newMessage = new messageModel(messageToInsert);
+                    await newMessage.save();
+                    console.log("Lead Exist: Add socket logic here...");
+                  }else{
+                    console.log("Lead Not Exist: Add Insertion logic here");
+                    const newContact = new contactData(contactToInsert);
+                    await newContact.save();
+                    // Insert new messaged
+                    messageToInsert.contactId = newContact._id;
+                    const newMessage = new messageModel(messageToInsert);
+                    await newMessage.save();
+                    // Sending POST request to an external API endpoint with form-data
+                     const response = await axios.post('https://xeyso.com/crm/wa-server', formData, {
+                      headers: {
+                        'Content-Type': 'multipart/form-data' // Ensure the request is sent as form-data
+                        }
+                      });
+                      const { message, status } = response.data;
+                      // Log the response from the external API
+                      console.log('Response from external API:',` Message: ${message} Status: ${status}`);
+                      // Revert to the person with automated message.
+                      // Send the response back to the client
+                      return res.json(response.data); // Send response and stop further processing
+                  }
+                } catch (err) {
+                  console.error('Error:', err);
+                  res.status(500).send('Server error');
+                }
+              } 
+              // End Recevied Message
+              else if (change.statuses) {
+                const statusData = change.statuses;
+                const messageId = statusData.id;
+                const conversation_id = statusData.conversation.id;
+                const updateMessageStatus = {
+                  status: statusData.status,
+                  conversation_id: conversation_id
+                }
+                const findMessageData = await messageModel.findOne({ message_id: contactToInsert.from });
+                    if(findMessageData){
+                      try{
+                      const result = await messageModel.updateOne(
+                        { message_id: messageId }, // Filter: find the document with the specified conversation_id
+                        {
+                          $set: updateMessageStatus
+                        }
+                      );              
+                    } catch (err){
+                      console.log(`Error: ${err}`);
+                    }
+                  }
+              }
+            }
+          }
+        }
+      // If no valid message data is processed, send a 200 status
+      return res.sendStatus(200); 
+    } catch (error) {
+      console.error('Error processing the message:', error);
+      return res.status(500).send('Internal Server Error'); // Handle errors gracefully
+    }
+  } else {
+    return res.sendStatus(400); // Invalid data format, send a 400 status
+  }
 };
 module.exports = { sendMessage, verifyWebhook, receiveMessage };
