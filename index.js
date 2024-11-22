@@ -7,6 +7,7 @@ const http = require('http');
 const socketIo = require('socket.io');  // Import socket.io
 
 const messageRoutes = require('./routes/messageRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 const configurationRoutes = require('./routes/configurationRoutes');
 
 const app = express();
@@ -53,6 +54,7 @@ app.set('io', io); // This allows access to io in your routes/controllers
 
 // Routes
 app.use('/api/messages', messageRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api/configuration', configurationRoutes);
 
 // Start the server on the specified port

@@ -131,8 +131,10 @@ const receiveMessage = async (req, res) => {
                     status: 'sent'
                   }
                 try{
-                  const findContactData = await contactData.findOne({ from: contactToInsert.from });
+                  const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number });
+                  console.log(`findContactData:  ${findContactData}`);
                   if(findContactData){
+                    console.log('In socket condition');
                     // Insert new messaged
                     messageToInsert.contactId = findContactData._id;
                     const newMessage = new messageModel(messageToInsert);
