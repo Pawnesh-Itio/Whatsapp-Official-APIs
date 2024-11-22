@@ -139,7 +139,7 @@ const receiveMessage = async (req, res) => {
                     await newMessage.save();
                     console.log("Lead Exist: Add socket logic here...");
                     const io = req.app.get('io');  // Get the Socket.io instance
-                    io.emit('chat-'+message.from, { messageToInsert, message: 'New Message' });
+                    io.emit('chat-'+message.from, { messageToInsert, type: 'received' });
                   }else{
                     console.log("Lead Not Exist: Add Insertion logic here");
                     const newContact = new contactData(contactToInsert);
@@ -171,6 +171,13 @@ const receiveMessage = async (req, res) => {
                 const statusData = change.statuses;
                 const messageId = statusData.id;
                 const conversation_id = statusData.conversation.id;
+                const recipient_id = statusData.recipient_id;
+                const dataToEmit = {
+                  messageId: messageId,
+                  status: statusData.status
+                }
+                // Emit socket 
+                io.emit('chat-'+recipient_id, { dataToEmit, type: 'status' });
                 const updateMessageStatus = {
                   status: statusData.status,
                   conversation_id: conversation_id
