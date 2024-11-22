@@ -120,7 +120,7 @@ const receiveMessage = async (req, res) => {
                   const contactToInsert = {
                     wa_name: contacts.profile.name,
                     wa_phone_number: message.from,
-                    wa_id: message.id,
+                    wa_id: contacts.wa_id,
                     status: 1,
                   };
                   const messageToInsert = {
@@ -186,6 +186,7 @@ const receiveMessage = async (req, res) => {
                       console.log(`Error: ${err}`);
                     }
                   }
+                  return res.json(response.data); // Send response and stop further processing
               }
             }
           }
