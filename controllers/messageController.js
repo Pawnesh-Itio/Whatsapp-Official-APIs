@@ -138,6 +138,8 @@ const receiveMessage = async (req, res) => {
                     const newMessage = new messageModel(messageToInsert);
                     await newMessage.save();
                     console.log("Lead Exist: Add socket logic here...");
+                    const io = req.app.get('io');  // Get the Socket.io instance
+                    io.emit('chat-'+message.from, { documentToInsert, message: 'New Message' });
                   }else{
                     console.log("Lead Not Exist: Add Insertion logic here");
                     const newContact = new contactData(contactToInsert);
