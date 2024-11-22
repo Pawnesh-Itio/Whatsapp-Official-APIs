@@ -103,7 +103,7 @@ const receiveMessage = async (req, res) => {
         for (const change of changes) {
           if (change.field === 'messages') {
             // Start Receiving Message
-            if(change.value.message){
+            if(change.value.messages){
                   const message = change.value.messages[0];
                   const contacts = change.value.contacts[0];
                   console.log('Received message:', message);
