@@ -106,7 +106,6 @@ const receiveMessage = async (req, res) => {
             if(change.value.messages){
                   const message = change.value.messages[0];
                   const contacts = change.value.contacts[0];
-                  console.log('Received message:', message);
                   // Initialize form data
                   const formData = new FormData();
                   formData.append('name', contacts.profile.name);
@@ -134,16 +133,13 @@ const receiveMessage = async (req, res) => {
                   const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number });
                   console.log(`findContactData:  ${findContactData}`);
                   if(findContactData){
-                    console.log('In socket condition');
                     // Insert new messaged
                     messageToInsert.contactId = findContactData._id;
                     const newMessage = new messageModel(messageToInsert);
                     await newMessage.save();
-                    console.log("Lead Exist: Add socket logic here...");
                     const io = req.app.get('io');  // Get the Socket.io instance
                     io.emit('chat-'+message.from, { messageToInsert, type: 'received' });
                   }else{
-                    console.log("Lead Not Exist: Add Insertion logic here");
                     const newContact = new contactData(contactToInsert);
                     await newContact.save();
                     // Insert new messaged
@@ -151,12 +147,16 @@ const receiveMessage = async (req, res) => {
                     const newMessage = new messageModel(messageToInsert);
                     await newMessage.save();
                     // Sending POST request to an external API endpoint with form-data
+                    try{
                      const response = await axios.post('https://xeyso.com/crm/wa-server', formData, {
                       headers: {
                         'Content-Type': 'multipart/form-data' // Ensure the request is sent as form-data
                         }
                       });
                       const { message, status } = response.data;
+                    }catch (err){
+                      console.log(err);
+                    }
                       // Log the response from the external API
                       console.log('Response from external API:',` Message: ${message} Status: ${status}`);
                       // Revert to the person with automated message.

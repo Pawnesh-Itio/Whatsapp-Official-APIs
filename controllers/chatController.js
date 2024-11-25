@@ -11,16 +11,11 @@ const chatList = async (req, res) =>{
 }
 const messageList = async (req, res) =>{
     const {chatId} = req.params
-    var contactId;
     try{
     const findContactData = await contactData.findOne({ wa_phone_number: chatId});
-     contactId = findContactData._id;
-    } catch (err){
-        console.log(err);
-    }
-    try {
-        const messages = await messageModel.find({contactId: contactId}).populate('contactId'); 
-        res.status(200).json(messages);
+    const contactId = findContactData._id;
+    const messages = await messageModel.find({contactId: contactId}); 
+    return res.status(200).json({messages: messages, status: "success", contaact: findContactData});
     } catch (error) {
         console.error('Error fetching contacts:', error);
         res.status(500).json({ error: 'An error occurred while fetching contacts' });
