@@ -4,7 +4,13 @@ const contactData = require('../models/contactModel');
 const messageModel = require('../models/messageModel');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
-    const {userId, accessToken, phoneNumberId, type, to, message, tempName} = req.body; // Required fields to send the message
+    const {userId, phoneNumberId, type, to, message, tempName, source} = req.body; // Required fields to send the message
+
+    // Fetch access Token
+    if(source=='crm'){
+      const findContactData = await configurationModel.findOne({ userId: 1, source:source });
+      const accessToken = findContactData.accessToken;
+    }
 
     // Plain Message Details
     const PlainMessagePayload = {
@@ -77,11 +83,20 @@ const sendMessage = async (req, res) => {
         contactId = newContact._id;
       }
       const timestamp = Math.floor(Date.now() / 1000); // Current Unix timestamp in seconds
+      if(type ==1){
+        var insertMessageBody = message;
+      }
+      if(type==2){
+        var insertMessageBody = message;
+      }
+      if(type==3){
+        var insertMessageBody = tempName;
+      }
       const messageToInsert = {
         message_id: response.data.messages.id,
         contactId:contactId,
         message_type: 'sent',
-        message_body: message,
+        message_body: insertMessageBody,
         time:timestamp,
         status: 'sent',
         sent_by: userId
