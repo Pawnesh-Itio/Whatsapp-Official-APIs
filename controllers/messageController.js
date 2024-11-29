@@ -60,10 +60,38 @@ const sendMessage = async (req, res) => {
           },
         }
       );
+      // Check if contact exist if not exist create new contact.
+      let contactId;
+      const findContactData = await contactData.findOne({ wa_phone_number: to });
+      console.log(`findContactData:  ${findContactData}`);
+      if(findContactData){
+        contactId = findContactData._id;
+      }else{
+        const contactToInsert = {
+          wa_phone_number: to,
+          wa_id: to,
+          status: 1,
+        };
+        const newContact = new contactData(contactToInsert);
+        await newContact.save();
+        contactId = newContact._id;
+      }
+      const timestamp = Math.floor(Date.now() / 1000); // Current Unix timestamp in seconds
+      const messageToInsert = {
+        message_id: response.data.messages.id,
+        contactId:contactId,
+        message_type: 'sent',
+        message_body: message,
+        time:timestamp,
+        status: 'sent',
+        sent_by: userId
+      }
+      const newMessage = new messageModel(messageToInsert);
+      await newMessage.save();
       res.status(200).json({ success: true, data: response.data });
     } catch (error) {
       console.error('Error sending message:', error.response ? error.response.data : error.message);
-      res.status(500).json({ success: false, error: error.message });
+      res.status(400).json({ success: false, error: error.message });
     }
   };
   
