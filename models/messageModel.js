@@ -21,10 +21,16 @@ const messageDataSchema = new mongoose.Schema({
         required:true,
     },
     sent_by: Number,
+    is_dm: {
+        type: Boolean,
+        required: true,
+        default: false,
+    },
     status:{
         type: String,
         required: true,
         enum: ['sent', 'delivered', 'read', 'failed', 'deleted'],
+        default: 'sent',
     }
   }, { timestamps: true });
   

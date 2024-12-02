@@ -2,76 +2,94 @@ const axios = require('axios');
 const configurationModel = require('../models/configurationModel');
 const contactData = require('../models/contactModel');
 const messageModel = require('../models/messageModel');
+const { json } = require('body-parser');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
-    const {userId, phoneNumberId, type, to, message, tempName, source} = req.body; // Required fields to send the message
+    const {userId, phoneNumberId, accessToken, type, to, message, tempName, source} = req.body; // Required fields to send the message
 
-    // Fetch access Token
-    if(source=='crm'){
-      const findContactData = await configurationModel.findOne({ userId: 1, source:source });
-      const accessToken = findContactData.accessToken;
+    if (!message) {
+      return res.status(400).json({ error: 'Message content is required' });
     }
-
-    // Plain Message Details
-    const PlainMessagePayload = {
-        messaging_product:'whatsapp',
-        recipient_type:'individual',
-        to:to,
-        type:'text',
-        text:{
-            preview_url:false,
-            body:message
+    if (!to){
+      return res.status(400).json({ error: 'Recipient number is required' });
+    }
+    let credentials = { phoneNumberId, accessToken };
+    if (!phoneNumberId || !accessToken) {
+        if (!source) {
+          return res.status(400).json({ error: 'Either phoneNumberId and accessToken or source must be provided' });
+      }
+      // Fetch access Token
+      if(source=='crm'){
+        credentials = await configurationModel.findOne({ userId: 1, source:source });
+        if (!credentials) {
+          return res.status(404).json({ error: `No credentials found for source: ${source}` });
         }
+      }
     }
-    // Message with link
-     const messageWithLink = {
+    if(type ==1){
+    // Plain Message Details
+    const PlainMessagePayload = 
+    {
+      messaging_product:'whatsapp',
+      recipient_type:'individual',
+      to:to,
+      type:'text',
+      text:{
+          preview_url:false,
+          body:message
+      }
+    }
+    var sendPaylod = PlainMessagePayload;
+    }
+    if(type==2){
+      // Message with link
+      const messageWithLink = 
+      {
         messaging_product:'whatsapp',
         to:to,
         text:{
             preview_url: true,
             body:message
         }
-     }
-  
-    // Template Message Details
-    const TemplateMessagePayload = {
-      messaging_product: 'whatsapp',
-      to: to,
-      type: 'template',
-      template: {
-        name: tempName, // Template name
-        language: {
-          code: 'en_US', // Language code
-        },
-      },
-    };
-    if(type ==1){
-      var sendPaylod = PlainMessagePayload;
-    }
-    if(type==2){
+      }
       var sendPaylod = messageWithLink;
     }
     if(type==3){
+      // Template Message Details
+      const TemplateMessagePayload = 
+      {
+        messaging_product: 'whatsapp',
+        to: to,
+        type: 'template',
+        template: {
+          name: tempName, // Template name
+          language: {
+            code: 'en_US', // Language code
+          },
+        },
+      };
       var sendPaylod = TemplateMessagePayload;
     }
   
     try {
       const response = await axios.post(
-        `https://graph.facebook.com/v14.0/${phoneNumberId}/messages`,
+        `https://graph.facebook.com/v14.0/${credentials.phoneNumberId}/messages`,
         sendPaylod,
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${credentials.accessToken}`,
             'Content-Type': 'application/json',
           },
         }
       );
       // Check if contact exist if not exist create new contact.
       let contactId;
+      let is_dm;
       const findContactData = await contactData.findOne({ wa_phone_number: to });
       console.log(`findContactData:  ${findContactData}`);
       if(findContactData){
         contactId = findContactData._id;
+        is_dm=false;
       }else{
         const contactToInsert = {
           wa_phone_number: to,
@@ -81,6 +99,7 @@ const sendMessage = async (req, res) => {
         const newContact = new contactData(contactToInsert);
         await newContact.save();
         contactId = newContact._id;
+        is_dm=true;
       }
       const timestamp = Math.floor(Date.now() / 1000); // Current Unix timestamp in seconds
       if(type ==1){
@@ -93,14 +112,16 @@ const sendMessage = async (req, res) => {
         var insertMessageBody = tempName;
       }
       const messageToInsert = {
-        message_id: response.data.messages.id,
+        message_id: response.data.messages[0].id,
         contactId:contactId,
         message_type: 'sent',
         message_body: insertMessageBody,
         time:timestamp,
         status: 'sent',
+        is_dm: is_dm,
         sent_by: userId
       }
+      console.log(messageToInsert);
       const newMessage = new messageModel(messageToInsert);
       await newMessage.save();
       res.status(200).json({ success: true, data: response.data });
