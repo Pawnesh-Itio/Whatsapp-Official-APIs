@@ -243,7 +243,7 @@ const receiveMessage = async (req, res) => {
                   status: statusData.status,
                   conversation_id: conversation_id
                 }
-                const findMessageData = await messageModel.findOne({ message_id: contactToInsert.from });
+                const findMessageData = await messageModel.findOne({ message_id: messageId });
                     if(findMessageData){
                       try{
                       const result = await messageModel.updateOne(
