@@ -229,8 +229,8 @@ const receiveMessage = async (req, res) => {
                 }
               } 
               // End Recevied Message
-              else if (change.statuses) {
-                const statusData = change.statuses;
+              else if (change.value.statuses) {
+                const statusData = change.value.statuses;
                 const messageId = statusData.id;
                 const conversation_id = statusData.conversation.id;
                 const recipient_id = statusData.recipient_id;
