@@ -158,7 +158,6 @@ const receiveMessage = async (req, res) => {
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;
   // Process incoming message
-  console.log(JSON.stringify(data));
   if (data.object === 'whatsapp_business_account') {  
     try {
       // Iterate over each entry
@@ -238,8 +237,8 @@ const receiveMessage = async (req, res) => {
                   messageId: messageId,
                   status: statusData.status
                 }
-                // Emit socket 
-                io.emit('chat-'+recipient_id, { dataToEmit, type: 'status' });
+                const io = req.app.get('io');  // Get the Socket.io instance
+                io.emit('chat-'+recipient_id, { dataToEmit, type: 'status' });// Emit socket 
                 const updateMessageStatus = {
                   status: statusData.status,
                   conversation_id: conversation_id
