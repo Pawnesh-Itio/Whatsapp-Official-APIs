@@ -256,7 +256,7 @@ const receiveMessage = async (req, res) => {
                       console.log(`Error: ${err}`);
                     }
                   }
-                  return res.json(response.data); // Send response and stop further processing
+                  return res.sendStatus(200); // Send response and stop further processing
               }
             }
           }
