@@ -158,6 +158,7 @@ const receiveMessage = async (req, res) => {
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;
   // Process incoming message
+  console.log(JSON.stringify(data));
   if (data.object === 'whatsapp_business_account') {  
     try {
       // Iterate over each entry
@@ -195,7 +196,6 @@ const receiveMessage = async (req, res) => {
                   }
                 try{
                   const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number });
-                  console.log(`findContactData:  ${findContactData}`);
                   if(findContactData){
                     // Insert new messaged
                     messageToInsert.contactId = findContactData._id;
@@ -221,10 +221,6 @@ const receiveMessage = async (req, res) => {
                     }catch (err){
                       console.log(err);
                     }
-                      // Log the response from the external API
-                      console.log('Response from external API:',` Message: ${message} Status: ${status}`);
-                      // Revert to the person with automated message.
-                      // Send the response back to the client
                       return res.json(response.data); // Send response and stop further processing
                   }
                 } catch (err) {
