@@ -86,7 +86,6 @@ const sendMessage = async (req, res) => {
       let contactId;
       let is_dm;
       const findContactData = await contactData.findOne({ wa_phone_number: to });
-      console.log(`findContactData:  ${findContactData}`);
       if(findContactData){
         contactId = findContactData._id;
         is_dm=false;
@@ -121,7 +120,6 @@ const sendMessage = async (req, res) => {
         is_dm: is_dm,
         sent_by: userId
       }
-      console.log(messageToInsert);
       const newMessage = new messageModel(messageToInsert);
       await newMessage.save();
       res.status(200).json({ success: true, data: response.data });
@@ -155,6 +153,7 @@ const verifyWebhook = async (req, res) => {
 
 // Controller to handle incoming WhatsApp messages (POST)
 const receiveMessage = async (req, res) => {
+  const processedStatuses = new Set(); 
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;
   // Process incoming message
@@ -233,6 +232,8 @@ const receiveMessage = async (req, res) => {
                 const messageId = statusData.id;
                 const conversation_id = statusData.conversation?.id;
                 const recipient_id = statusData.recipient_id;
+                const statusKey = `${messageId}-${statusData.status}`;
+                if (!emittedStatuses.has(statusKey)) {
                 const dataToEmit = {
                   messageId: messageId,
                   status: statusData.status
@@ -247,7 +248,7 @@ const receiveMessage = async (req, res) => {
                   updateMessageStatus.conversation_id = conversation_id;
                 }
                 const findMessageData = await messageModel.findOne({ message_id: messageId });
-                    if(findMessageData){
+                    if(findMessageData && findMessageData.status !== statusData.status){
                       try{
                       const result = await messageModel.updateOne(
                         { message_id: messageId }, // Filter: find the document with the specified conversation_id
@@ -259,6 +260,10 @@ const receiveMessage = async (req, res) => {
                       console.log(`Error: ${err}`);
                     }
                   }
+                  setTimeout(() => emittedStatuses.delete(statusKey), 60000); // Cleanup cache
+                }else{
+                  console.log('Duplicate status update ignored:', statusKey);
+                }
                   return res.sendStatus(200); // Send response and stop further processing
               }
             }
