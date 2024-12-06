@@ -233,7 +233,8 @@ const receiveMessage = async (req, res) => {
                 const conversation_id = statusData.conversation?.id;
                 const recipient_id = statusData.recipient_id;
                 const statusKey = `${messageId}-${statusData.status}`;
-                if (!emittedStatuses.has(statusKey)) {
+                if (!processedStatuses.has(statusKey)) {
+                  processedStatuses.add(statusKey);
                 const dataToEmit = {
                   messageId: messageId,
                   status: statusData.status
@@ -260,7 +261,7 @@ const receiveMessage = async (req, res) => {
                       console.log(`Error: ${err}`);
                     }
                   }
-                  setTimeout(() => emittedStatuses.delete(statusKey), 60000); // Cleanup cache
+                  setTimeout(() => processedStatuses.delete(statusKey), 60000); // Cleanup cache
                 }else{
                   console.log('Duplicate status update ignored:', statusKey);
                 }
