@@ -231,7 +231,7 @@ const receiveMessage = async (req, res) => {
               else if (change.value.statuses) {
                 const statusData = change.value.statuses[0];
                 const messageId = statusData.id;
-                const conversation_id = statusData.conversation.id;
+                const conversation_id = statusData.conversation?.id;
                 const recipient_id = statusData.recipient_id;
                 const dataToEmit = {
                   messageId: messageId,
@@ -240,8 +240,11 @@ const receiveMessage = async (req, res) => {
                 const io = req.app.get('io');  // Get the Socket.io instance
                 io.emit('chat-'+recipient_id, { dataToEmit, type: 'status' });// Emit socket 
                 const updateMessageStatus = {
-                  status: statusData.status,
-                  conversation_id: conversation_id
+                  status: statusData.status
+                }
+                // Only include conversation_id if it exists
+                if (conversation_id) {
+                  updateMessageStatus.conversation_id = conversation_id;
                 }
                 const findMessageData = await messageModel.findOne({ message_id: messageId });
                     if(findMessageData){
