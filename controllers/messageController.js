@@ -125,7 +125,7 @@ const sendMessage = async (req, res) => {
       res.status(200).json({ success: true, data: response.data });
     } catch (error) {
       console.error('Error sending message:', error.response ? error.response.data : error.message);
-      res.status(400).json({ success: false, error: error.message });
+      res.status(400).json({ success: false, error: error });
     }
   };
   
