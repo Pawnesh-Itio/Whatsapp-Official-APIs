@@ -12,6 +12,11 @@ const messageDataSchema = new mongoose.Schema({
         required: true,
         enum: ['sent', 'received'],
     },
+    message_content:{
+        type: String,
+        required: true,
+        enum: [1, 2, 3, 4],
+    },
     message_body:{
         type: String,
         required: true,

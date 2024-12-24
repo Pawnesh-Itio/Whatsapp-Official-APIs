@@ -2,17 +2,20 @@ const axios = require('axios');
 const configurationModel = require('../models/configurationModel');
 const contactData = require('../models/contactModel');
 const messageModel = require('../models/messageModel');
+const mediaModel = require('../models/mediaModel');
 const { json } = require('body-parser');
+const fs = require('fs');
+const FormData = require('form-data');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
-    const {userId, phoneNumberId, accessToken, type, to, message, tempName, source} = req.body; // Required fields to send the message
+    const {userId, phoneNumberId, accessToken, type, to, message, tempName, source, caption, imageId} = req.body; // Required fields to send the message
 
-    if (!message) {
-      return res.status(400).json({ error: 'Message content is required' });
-    }
+    //Condition to check recipient number
     if (!to){
       return res.status(400).json({ error: 'Recipient number is required' });
     }
+
+    // Condition for credentials
     let credentials = { phoneNumberId, accessToken };
     if (!phoneNumberId || !accessToken) {
         if (!source) {
@@ -26,8 +29,13 @@ const sendMessage = async (req, res) => {
         }
       }
     }
-    if(type ==1){
-    // Plain Message Details
+    // End conditions for credentials
+
+    // Plain Message Details Start
+    if(type ==1){ 
+      if (!message) {
+        return res.status(400).json({ error: 'Message content is required' });
+      }
     const PlainMessagePayload = 
     {
       messaging_product:'whatsapp',
@@ -41,8 +49,10 @@ const sendMessage = async (req, res) => {
     }
     var sendPaylod = PlainMessagePayload;
     }
-    if(type==2){
-      // Message with link
+    // Plain Message Details Ended
+
+    // Message with link Started
+    if(type==2){ 
       const messageWithLink = 
       {
         messaging_product:'whatsapp',
@@ -54,8 +64,13 @@ const sendMessage = async (req, res) => {
       }
       var sendPaylod = messageWithLink;
     }
-    if(type==3){
-      // Template Message Details
+    // Message with link Ended
+
+    // Template Message Details Started
+    if(type==3){ 
+      if (!tempName) {
+        return res.status(400).json({ error: 'Template name is required' });
+      }
       const TemplateMessagePayload = 
       {
         messaging_product: 'whatsapp',
@@ -70,7 +85,33 @@ const sendMessage = async (req, res) => {
       };
       var sendPaylod = TemplateMessagePayload;
     }
+
+    // Template Message Details Ended
+
+    // Media message with caption or without started
+    if(type==4){
+      var ImagePayload;
+      if(caption){
+        ImagePayload= {
+          id:imageId,
+          caption:caption
+        }
+      }else{
+        ImagePayload= {
+          id:imageId
+        }
+      }
+      const MediaMessagePayload = {
+        messaging_product:'whatsapp',
+        to:to,
+        type:'image',
+        image:ImagePayload
+      }
+      var sendPaylod = MediaMessagePayload;
+    }
+    // Media message with caption or without Ended
   
+    // WA-Official api hit with appropriate payload
     try {
       const response = await axios.post(
         `https://graph.facebook.com/v14.0/${credentials.phoneNumberId}/messages`,
@@ -82,6 +123,7 @@ const sendMessage = async (req, res) => {
           },
         }
       );
+
       // Check if contact exist if not exist create new contact.
       let contactId;
       let is_dm;
@@ -100,20 +142,31 @@ const sendMessage = async (req, res) => {
         contactId = newContact._id;
         is_dm=true;
       }
+      // Contact creation ended
+
+      // Message Creation Started
       const timestamp = Math.floor(Date.now() / 1000); // Current Unix timestamp in seconds
       if(type ==1){
+        var messageContent = 1;
         var insertMessageBody = message;
       }
       if(type==2){
+        var messageContent = 2;
         var insertMessageBody = message;
       }
       if(type==3){
+        var messageContent = 3;
         var insertMessageBody = tempName;
+      }
+      if(type==4){
+        var messageContent = 4;
+        var insertMessageBody =JSON.stringify( ImagePayload);
       }
       const messageToInsert = {
         message_id: response.data.messages[0].id,
         contactId:contactId,
         message_type: 'sent',
+        message_content:messageContent,
         message_body: insertMessageBody,
         time:timestamp,
         status: 'sent',
@@ -122,14 +175,67 @@ const sendMessage = async (req, res) => {
       }
       const newMessage = new messageModel(messageToInsert);
       await newMessage.save();
-      res.status(200).json({ success: true, data: response.data });
+      // Message Creation Ended
+
+      // Return response
+      return res.status(200).json({ success: true, data: response.data });
+
     } catch (error) {
       console.error('Error sending message:', error.response ? error.response.data : error.message);
       res.status(400).json({ success: false, error: error });
     }
   };
-  
 
+const uploadMedia = async(req, res) =>{
+  const { phoneNumberId, accessToken, source,userId } = req.body;
+  const {path: filePath, mimetype} = req.file
+
+  let credentials = { phoneNumberId, accessToken };
+  if (!phoneNumberId || !accessToken) {
+      if (!source) {
+        return res.status(400).json({ error: 'Either phoneNumberId and accessToken or source must be provided' });
+    }
+    // Fetch access Token
+    if(source=='crm'){
+      credentials = await configurationModel.findOne({ userId: 1, source:source });
+      if (!credentials) {
+        return res.status(404).json({ error: `No credentials found for source: ${source}` });
+      }
+    }
+  }
+  try{
+      // Create form-data for uploading the file
+      const formData = new FormData();
+      formData.append('messaging_product', 'whatsapp'); // Specify the messaging product
+      formData.append('file', fs.createReadStream(filePath),{contentType:mimetype});//Specify the image path
+      formData.append('type', mimetype); // Specify the type of image
+      const response = await axios.post(
+          `https://graph.facebook.com/v14.0/${credentials.phoneNumberId}/media`,
+          formData,
+          {
+              headers: {
+                  Authorization: `Bearer ${credentials.accessToken}`
+              },
+          }
+      );
+      const dataToInsert = {
+        path:filePath,
+        mime_type:mimetype,
+        media_id:response.data.id,
+        status:1
+      }
+      try{
+      const newMedia = new mediaModel(dataToInsert);
+      await newMedia.save();
+      }catch (err){
+        console.log(err);
+      }
+     return res.status(200).json({ media_id: response.data.id });
+     
+  }catch (err){
+    console.log(err);
+  }
+}
 // Controller to handle webhook verification (GET)
 const verifyWebhook = async (req, res) => {
   const {userId} = req.params // Get user id from url parameters.
@@ -280,4 +386,4 @@ const receiveMessage = async (req, res) => {
     return res.sendStatus(400); // Invalid data format, send a 400 status
   }
 };
-module.exports = { sendMessage, verifyWebhook, receiveMessage };
+module.exports = { sendMessage, verifyWebhook, receiveMessage, uploadMedia };
