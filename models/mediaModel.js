@@ -12,6 +12,10 @@ const mediaSchema = new mongoose.Schema({
         type:Number,
         required:true
       },
+      user_id:{
+        type:Number,
+        required:true
+      },
       status: {
                 type: Number,
                 required: true,

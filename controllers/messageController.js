@@ -222,6 +222,7 @@ const uploadMedia = async(req, res) =>{
         path:filePath,
         mime_type:mimetype,
         media_id:response.data.id,
+        user_id:userId,
         status:1
       }
       try{
