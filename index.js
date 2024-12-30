@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');  // Import socket.io
+const path = require('path');
+
 
 const messageRoutes = require('./routes/messageRoutes');
 const chatRoutes = require('./routes/chatRoutes');
@@ -53,6 +55,8 @@ io.on('connection', (socket) => {
 app.set('io', io); // This allows access to io in your routes/controllers
 
 // Routes
+// Serve static files from the 'uploads' folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/messages', messageRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/configuration', configurationRoutes);

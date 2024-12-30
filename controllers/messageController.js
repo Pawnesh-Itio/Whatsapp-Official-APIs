@@ -160,7 +160,7 @@ const sendMessage = async (req, res) => {
       }
       if(type==4){
         var messageContent = 4;
-        var insertMessageBody =JSON.stringify( ImagePayload);
+        var insertMessageBody =caption;
       }
       const messageToInsert = {
         message_id: response.data.messages[0].id,
@@ -173,12 +173,15 @@ const sendMessage = async (req, res) => {
         is_dm: is_dm,
         sent_by: userId
       }
+      if(type==4){
+        messageToInsert.media_id = imageId;
+      }
       const newMessage = new messageModel(messageToInsert);
       await newMessage.save();
       // Message Creation Ended
 
       // Return response
-      return res.status(200).json({ success: true, data: response.data });
+      return res.status(200).json({ success: true, data: response.data, type: type});
 
     } catch (error) {
       console.error('Error sending message:', error.response ? error.response.data : error.message);
@@ -231,10 +234,11 @@ const uploadMedia = async(req, res) =>{
       }catch (err){
         console.log(err);
       }
-     return res.status(200).json({ media_id: response.data.id });
+     return res.status(200).json({ media_id: response.data.id, path: filePath });
      
   }catch (err){
     console.log(err);
+    return res.status(400).json({ message: "Failed to upload", status:"failed"});
   }
 }
 // Controller to handle webhook verification (GET)
