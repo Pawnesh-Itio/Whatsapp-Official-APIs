@@ -293,6 +293,7 @@ const receiveMessage = async (req, res) => {
             message_body: message.text.body,
             time: message.timestamp,
             status: "sent",
+            message_content:1
           };
 
           const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number });
