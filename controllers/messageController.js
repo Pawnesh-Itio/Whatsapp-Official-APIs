@@ -264,132 +264,111 @@ const verifyWebhook = async (req, res) => {
 
 // Controller to handle incoming WhatsApp messages (POST)
 const receiveMessage = async (req, res) => {
-  console.log("Inside webhook")
-  const processedStatuses = new Set(); 
-  const userId = req.params.userId;  // Access userId from URL params
+  console.log("Inside webhook");
+  const processedStatuses = new Set();
   const data = req.body;
-  // Process incoming message
-  if (data.object === 'whatsapp_business_account') {  
-    try {
-      // Iterate over each entry
-      for (const entry of data.entry) {
-        const changes = entry.changes;
-        // Iterate over each change
-        for (const change of changes) {
-          if (change.field === 'messages') {
-            // Start Receiving Message
-            if(change.value.messages){
-                  const message = change.value.messages[0];
-                  const contacts = change.value.contacts[0];
-                  // Initialize form data
-                  const formData = new FormData();
-                  formData.append('name', contacts.profile.name);
-                  formData.append('from', message.from);
-                  formData.append('id', message.id);
-                  formData.append('timestamp', message.timestamp);
-                  formData.append('text', message.text.body);
-                  formData.append('type', message.type);
 
-                  // Initializing mongoss data
-                  const contactToInsert = {
-                    wa_name: contacts.profile.name,
-                    wa_phone_number: message.from,
-                    wa_id: contacts.wa_id,
-                    status: 1,
-                  };
-                  const messageToInsert = {
-                    message_id: message.id,
-                    message_type: 'received',
-                    message_body: message.text.body,
-                    time:message.timestamp,
-                    status: 'sent'
-                  }
-                try{
-                  const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number });
-                  if(findContactData){
-                    // Insert new messaged
-                    messageToInsert.contactId = findContactData._id;
-                    const newMessage = new messageModel(messageToInsert);
-                    await newMessage.save();
-                    const io = req.app.get('io');  // Get the Socket.io instance
-                    io.emit('chat-'+message.from, { messageToInsert, type: 'received' });
-                  }else{
-                    const newContact = new contactData(contactToInsert);
-                    await newContact.save();
-                    // Insert new messaged
-                    messageToInsert.contactId = newContact._id;
-                    const newMessage = new messageModel(messageToInsert);
-                    await newMessage.save();
-                    // Sending POST request to an external API endpoint with form-data
-                    try{
-                     const response = await axios.post('https://xeyso.com/crm/wa-server', formData, {
-                      headers: {
-                        'Content-Type': 'multipart/form-data' // Ensure the request is sent as form-data
-                        }
-                      });
-                      const { message, status } = response.data;
-                    }catch (err){
-                      console.log(err);
-                    }
-                      return res.json(response.data); // Send response and stop further processing
-                  }
-                } catch (err) {
-                  console.error('Error:', err);
-                  res.status(500).send('Server error');
-                }
-              } 
-              // End Recevied Message
-              else if (change.value.statuses) {
-                const statusData = change.value.statuses[0];
-                const messageId = statusData.id;
-                const conversation_id = statusData.conversation?.id;
-                const recipient_id = statusData.recipient_id;
-                const statusKey = `${messageId}-${statusData.status}`;
-                if (!processedStatuses.has(statusKey)) {
-                  processedStatuses.add(statusKey);
-                const dataToEmit = {
-                  messageId: messageId,
-                  status: statusData.status
-                }
-                const io = req.app.get('io');  // Get the Socket.io instance
-                io.emit('chat-'+recipient_id, { dataToEmit, type: 'status' });// Emit socket 
-                const updateMessageStatus = {
-                  status: statusData.status
-                }
-                // Only include conversation_id if it exists
-                if (conversation_id) {
-                  updateMessageStatus.conversation_id = conversation_id;
-                }
-                const findMessageData = await messageModel.findOne({ message_id: messageId });
-                    if(findMessageData && findMessageData.status !== statusData.status){
-                      try{
-                      const result = await messageModel.updateOne(
-                        { message_id: messageId }, // Filter: find the document with the specified conversation_id
-                        {
-                          $set: updateMessageStatus
-                        }
-                      );              
-                    } catch (err){
-                      console.log(`Error: ${err}`);
-                    }
-                  }
-                  setTimeout(() => processedStatuses.delete(statusKey), 60000); // Cleanup cache
-                }else{
-                  console.log('Duplicate status update ignored:', statusKey);
-                }
-                  return res.sendStatus(200); // Send response and stop further processing
-              }
+  // Validate incoming data
+  if (data.object !== "whatsapp_business_account") {
+    return res.sendStatus(400); // Invalid data format
+  }
+
+  try {
+    for (const entry of data.entry) {
+      for (const change of entry.changes) {
+        if (change.field === "messages" && change.value.messages) {
+          const message = change.value.messages[0];
+          const contacts = change.value.contacts[0];
+
+          const contactToInsert = {
+            wa_name: contacts.profile.name,
+            wa_phone_number: message.from,
+            wa_id: contacts.wa_id,
+            status: 1,
+          };
+
+          const messageToInsert = {
+            message_id: message.id,
+            message_type: "received",
+            message_body: message.text.body,
+            time: message.timestamp,
+            status: "sent",
+          };
+
+          const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number });
+
+          if (findContactData) {
+            // Add message for existing contact
+            messageToInsert.contactId = findContactData._id;
+            const newMessage = new messageModel(messageToInsert);
+            await newMessage.save();
+
+            const io = req.app.get("io");
+            io.emit("chat-" + message.from, { messageToInsert, type: "received" });
+          } else {
+            // Create new contact and add message
+            const newContact = new contactData(contactToInsert);
+            await newContact.save();
+
+            messageToInsert.contactId = newContact._id;
+            const newMessage = new messageModel(messageToInsert);
+            await newMessage.save();
+
+            // Sending POST request to external API
+            try {
+              const formData = new FormData();
+              formData.append("name", contacts.profile.name);
+              formData.append("from", message.from);
+              formData.append("id", message.id);
+              formData.append("timestamp", message.timestamp);
+              formData.append("text", message.text.body);
+              formData.append("type", message.type);
+
+              await axios.post("https://xeyso.com/crm/wa-server", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+              });
+            } catch (err) {
+              console.error("Error sending data to external API:", err);
             }
           }
+        } else if (change.field === "statuses") {
+          // Handle message status updates
+          const statusData = change.value.statuses[0];
+          const messageId = statusData.id;
+          const statusKey = `${messageId}-${statusData.status}`;
+
+          if (!processedStatuses.has(statusKey)) {
+            processedStatuses.add(statusKey);
+
+            const io = req.app.get("io");
+            io.emit("chat-" + statusData.recipient_id, {
+              messageId,
+              status: statusData.status,
+              type: "status",
+            });
+
+            // Update message status in the database
+            const findMessageData = await messageModel.findOne({ message_id: messageId });
+            if (findMessageData && findMessageData.status !== statusData.status) {
+              await messageModel.updateOne(
+                { message_id: messageId },
+                { $set: { status: statusData.status, conversation_id: statusData.conversation?.id || null } }
+              );
+            }
+
+            setTimeout(() => processedStatuses.delete(statusKey), 60000); // Cleanup
+          } else {
+            console.log("Duplicate status update ignored:", statusKey);
+          }
         }
-      // If no valid message data is processed, send a 200 status
-      return res.sendStatus(200); 
-    } catch (error) {
-      console.error('Error processing the message:', error);
-      return res.status(500).send('Internal Server Error'); // Handle errors gracefully
+      }
     }
-  } else {
-    return res.sendStatus(400); // Invalid data format, send a 400 status
+
+    res.sendStatus(200); // Acknowledge successful processing
+  } catch (error) {
+    console.error("Error processing the message:", error);
+    res.status(500).send("Internal Server Error");
   }
 };
+
 module.exports = { sendMessage, verifyWebhook, receiveMessage, uploadMedia };
