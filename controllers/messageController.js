@@ -264,6 +264,7 @@ const verifyWebhook = async (req, res) => {
 
 // Controller to handle incoming WhatsApp messages (POST)
 const receiveMessage = async (req, res) => {
+  console.log("Inside webhook")
   const processedStatuses = new Set(); 
   const userId = req.params.userId;  // Access userId from URL params
   const data = req.body;

@@ -15,7 +15,7 @@ const messageDataSchema = new mongoose.Schema({
     message_content:{
         type: String,
         required: true,
-        enum: [1, 2, 3, 4],//1:plain text, 2:Template Message, 3:Link Message, 4:Media Message
+        enum: [1, 2, 3, 4],//1:plain text, 2:Link Message, 3:Template Message,  4:Media Message
     },
     message_body:{
         type: String,
