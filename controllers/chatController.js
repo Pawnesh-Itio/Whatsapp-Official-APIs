@@ -1,7 +1,9 @@
 const contactData = require('../models/contactModel');
 const messageModel = require('../models/messageModel');
 const chatList = async (req, res) =>{
+  const { phoneNumberId } = req.params;
     try {
+      // Fetch contact data using phoneNumberId
         const contacts = await contactData.find({}); 
         res.status(200).json(contacts);
     } catch (error) {
@@ -10,9 +12,10 @@ const chatList = async (req, res) =>{
     }
 }
 const messageList = async (req, res) => {
-    const { chatId } = req.params;
+    const { chatId, phoneNumberId } = req.params;
   
     try {
+      // fetch contact using chatId and phonenumberId there could be same number for two or more different phonenumbers
       const findContactData = await contactData.findOne({ wa_phone_number: chatId });
   
       if (findContactData) {

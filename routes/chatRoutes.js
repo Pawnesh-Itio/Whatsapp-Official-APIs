@@ -4,7 +4,7 @@ const { chatList, messageList} = require('../controllers/chatController');
 const router = express.Router();
 
 // Route to send a message
-router.get('/list', chatList);
-router.get('/messages/:chatId',messageList);
+router.get('/list/:phoneNumberId', chatList);
+router.get('/messages/:chatId/:phoneNumberId',messageList);
 
 module.exports = router;

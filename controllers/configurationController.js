@@ -2,22 +2,51 @@ const configurationModel = require('../models/configurationModel');
 
 const saveConfiguration = async (req, res) =>{
     try {
-    const {userId, accessToken, phoneNumberId, webhookUrl, webhookVerificationToken, source} = req.body;
+    const {accessToken, phoneNumber, phoneNumberId,department,staffId, webhookVerificationToken, source, config_id} = req.body;
     //Check if a record of same user exist, then update or insert.
-    const updateData = await configurationModel.findOneAndUpdate(
-        {userId:userId, source:source},//Filter by User Id to indentify exisitng record
-        {accessToken:accessToken, phoneNumberId:phoneNumberId,webhookVerificationToken:webhookVerificationToken, source:source},// Data to be updated.
-        {new: true, upsert: true, useFindAndModify: false} // Upsert: true creates a new document if none exists
-    );
-    res.status(200).json({ message: 'Data saved/updated successfully!', data: updateData });
+    const updateValues = {
+        accessToken,
+        phoneNumber,
+        phoneNumberId,
+        webhookVerificationToken,
+        source
+    };
+    if(department && department !="0"){
+        updateValues.type = "Department";
+        updateValues.departmentId=department;
+    }
+    if(staffId){
+        updateValues.type = "Staff";
+        updateValues.staffId = staffId;
+    }
+    if(department=="0" && !staffId){
+        updateValues.type = "Selective";
+    }
+    if(config_id){
+        const updateData = await configurationModel.findOneAndUpdate(
+            {_id: config_id},//Filter by Config Id
+            updateValues,
+            {new: true}
+        );
+        res.status(200).json({ message: 'Phone number updated successfully!', data: updateData });
+    }else{
+            // Insert new record
+            try {
+            const newRecord = new configurationModel(updateValues);
+            await newRecord.save();
+            res.status(200).json({ message: 'Phone number created successfully!', data: newRecord });
+        } catch (error) {
+            res.status(400).json({ message: 'Error creating phone number!', error: error.message });
+        }
+    }
 } catch (error) {
     res.status(500).json({ message: 'Error saving/updating data', error })
 }
 }
-const getConfigurationDetailByUserId = async (req, res) =>{
-    const {userId} = req.params // Get user id from url parameters.
+const getConfigurationDetailBySource = async (req, res) =>{
+    const {source} = req.params // Get user id from url parameters.
     try{
-        const data = await configurationModel.findOne({userId});
+        const data = await configurationModel.find({source});
         if(data){
             return res.status(200).json(data);
         }else{
@@ -27,4 +56,20 @@ const getConfigurationDetailByUserId = async (req, res) =>{
 
     }
 }
-module.exports = { saveConfiguration,getConfigurationDetailByUserId };
+const deleteConfiguration = async (req, res) => {
+    try {
+        const { config_id } = req.params; // Get config_id from URL parameters
+        // Delete the record
+        const deletedData = await configurationModel.findByIdAndDelete(config_id);
+
+        if (!deletedData) {
+            return res.status(404).json({ message: 'Configuration not found!' });
+        }
+
+        return res.status(200).json({ message: 'Configuration deleted successfully!', data: deletedData });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error deleting configuration', error: error.message });
+    }
+};
+
+module.exports = { saveConfiguration,getConfigurationDetailBySource,deleteConfiguration };

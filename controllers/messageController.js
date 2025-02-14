@@ -8,7 +8,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
-    const {userId, phoneNumberId, accessToken, type, to, message, tempName, source, caption, imageId} = req.body; // Required fields to send the message
+    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, messageType, to, message, tempName,  caption, imageId} = req.body; // Required fields to send the message
 
     //Condition to check recipient number
     if (!to){
@@ -18,21 +18,19 @@ const sendMessage = async (req, res) => {
     // Condition for credentials
     let credentials = { phoneNumberId, accessToken };
     if (!phoneNumberId || !accessToken) {
-        if (!source) {
-          return res.status(400).json({ error: 'Either phoneNumberId and accessToken or source must be provided' });
+        if (!source || !configurationId) {
+          return res.status(400).json({ error: 'Either phoneNumberId and accessToken or Source and Configuration Id must be provided' });
       }
       // Fetch access Token
-      if(source=='crm'){
-        credentials = await configurationModel.findOne({ userId: 1, source:source });
+        credentials = await configurationModel.findOne({ source:source, _id:configurationId });
         if (!credentials) {
           return res.status(404).json({ error: `No credentials found for source: ${source}` });
         }
-      }
     }
     // End conditions for credentials
 
     // Plain Message Details Start
-    if(type ==1){ 
+    if(messageType ==1){ 
       if (!message) {
         return res.status(400).json({ error: 'Message content is required' });
       }
@@ -52,7 +50,7 @@ const sendMessage = async (req, res) => {
     // Plain Message Details Ended
 
     // Message with link Started
-    if(type==2){ 
+    if(messageType==2){ 
       const messageWithLink = 
       {
         messaging_product:'whatsapp',
@@ -67,7 +65,7 @@ const sendMessage = async (req, res) => {
     // Message with link Ended
 
     // Template Message Details Started
-    if(type==3){ 
+    if(messageType==3){ 
       if (!tempName) {
         return res.status(400).json({ error: 'Template name is required' });
       }
@@ -89,7 +87,7 @@ const sendMessage = async (req, res) => {
     // Template Message Details Ended
 
     // Media message with caption or without started
-    if(type==4){
+    if(messageType==4){
       var ImagePayload;
       if(caption){
         ImagePayload= {
@@ -126,54 +124,48 @@ const sendMessage = async (req, res) => {
 
       // Check if contact exist if not exist create new contact.
       let contactId;
-      let is_dm;
-      const findContactData = await contactData.findOne({ wa_phone_number: to });
+      const findContactData = await contactData.findOne({ wa_phone_number: to, phoneNumberId:credentials.phoneNumberId });
       if(findContactData){
         contactId = findContactData._id;
-        is_dm=false;
       }else{
         const contactToInsert = {
+          phoneNumberId:credentials.phoneNumberId,
           wa_phone_number: to,
           wa_id: to,
+          type:ContactType,
           status: 1,
         };
         const newContact = new contactData(contactToInsert);
         await newContact.save();
         contactId = newContact._id;
-        is_dm=true;
       }
       // Contact creation ended
 
       // Message Creation Started
       const timestamp = Math.floor(Date.now() / 1000); // Current Unix timestamp in seconds
-      if(type ==1){
-        var messageContent = 1;
+      if(messageType ==1){
         var insertMessageBody = message;
       }
-      if(type==2){
-        var messageContent = 2;
+      if(messageType==2){
         var insertMessageBody = message;
       }
-      if(type==3){
-        var messageContent = 3;
+      if(messageType==3){
         var insertMessageBody = tempName;
       }
-      if(type==4){
-        var messageContent = 4;
+      if(messageType==4){
         var insertMessageBody =caption;
       }
       const messageToInsert = {
         message_id: response.data.messages[0].id,
         contactId:contactId,
         message_type: 'sent',
-        message_content:messageContent,
+        message_content:messageType,
         message_body: insertMessageBody,
         time:timestamp,
         status: 'sent',
-        is_dm: is_dm,
         sent_by: userId
       }
-      if(type==4){
+      if(messageType==4){
         messageToInsert.media_id = imageId;
       }
       const newMessage = new messageModel(messageToInsert);
@@ -190,17 +182,17 @@ const sendMessage = async (req, res) => {
   };
 
 const uploadMedia = async(req, res) =>{
-  const { phoneNumberId, accessToken, source,userId } = req.body;
+  const { phoneNumberId, accessToken, source,configurationId } = req.body;
   const {path: filePath, mimetype} = req.file
 
   let credentials = { phoneNumberId, accessToken };
   if (!phoneNumberId || !accessToken) {
       if (!source) {
-        return res.status(400).json({ error: 'Either phoneNumberId and accessToken or source must be provided' });
+        return res.status(400).json({ error: 'Either phoneNumberId and accessToken or Source and ConfigurationId must be provided' });
     }
     // Fetch access Token
     if(source=='crm'){
-      credentials = await configurationModel.findOne({ userId: 1, source:source });
+      credentials = await configurationModel.findOne({ source:source, _id:configurationId });
       if (!credentials) {
         return res.status(404).json({ error: `No credentials found for source: ${source}` });
       }
@@ -264,7 +256,6 @@ const verifyWebhook = async (req, res) => {
 
 // Controller to handle incoming WhatsApp messages (POST)
 const receiveMessage = async (req, res) => {
-  console.log("Inside webhook");
   const processedStatuses = new Set();
   const data = req.body;
 
@@ -277,9 +268,10 @@ const receiveMessage = async (req, res) => {
     for (const entry of data.entry) {
       for (const change of entry.changes) {
         if (change.field === "messages" && change.value.messages) {
+          const metadata = change.value.metadata[0];
           const message = change.value.messages[0];
           const contacts = change.value.contacts[0];
-
+          // Add phonenumberid  to create contact
           const contactToInsert = {
             wa_name: contacts.profile.name,
             wa_phone_number: message.from,
@@ -295,7 +287,7 @@ const receiveMessage = async (req, res) => {
             status: "sent",
             message_content:1
           };
-
+          // User PhoneNumberID as well to fetch contactData
           const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number });
 
           if (findContactData) {
