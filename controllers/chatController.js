@@ -1,11 +1,18 @@
 const contactData = require('../models/contactModel');
 const messageModel = require('../models/messageModel');
-const chatList = async (req, res) =>{
-  const { phoneNumberId } = req.params;
+const chatList = async (req, res) =>{ 
+  const { phoneNumberId, type } = req.params;
     try {
       // Fetch contact data using phoneNumberId
-        const contacts = await contactData.find({}); 
-        res.status(200).json(contacts);
+        const contacts = await contactData.find({
+          phoneNumberId:phoneNumberId,
+          type:type
+        }); 
+        if(contacts){
+        return res.status(200).json(contacts);
+        }else{
+          return res.status(401).json({ error: 'Contact not found' });
+        }
     } catch (error) {
         console.error('Error fetching contacts:', error);
         res.status(500).json({ error: 'An error occurred while fetching contacts' });

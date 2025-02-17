@@ -269,10 +269,12 @@ const receiveMessage = async (req, res) => {
       for (const change of entry.changes) {
         if (change.field === "messages" && change.value.messages) {
           const metadata = change.value.metadata[0];
+          console.log(metadata);
           const message = change.value.messages[0];
           const contacts = change.value.contacts[0];
           // Add phonenumberid  to create contact
           const contactToInsert = {
+            phoneNumberId: metadata.phone_number_id,
             wa_name: contacts.profile.name,
             wa_phone_number: message.from,
             wa_id: contacts.wa_id,
