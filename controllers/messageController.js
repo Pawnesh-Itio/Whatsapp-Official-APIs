@@ -281,6 +281,7 @@ const receiveMessage = async (req, res) => {
             wa_phone_number: message.from,
             wa_id: contacts.wa_id,
             status: 1,
+            type:"Regular"
           };
 
           const messageToInsert = {
