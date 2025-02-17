@@ -173,7 +173,7 @@ const sendMessage = async (req, res) => {
       // Message Creation Ended
 
       // Return response
-      return res.status(200).json({ success: true, data: response.data, type: type});
+      return res.status(200).json({ success: true, data: response.data, type: messageType});
 
     } catch (error) {
       console.error('Error sending message:', error.response ? error.response.data : error.message);
@@ -182,12 +182,12 @@ const sendMessage = async (req, res) => {
   };
 
 const uploadMedia = async(req, res) =>{
-  const { phoneNumberId, accessToken, source,configurationId } = req.body;
+  const {userId, phoneNumberId, accessToken, source,configurationId } = req.body;
   const {path: filePath, mimetype} = req.file
 
   let credentials = { phoneNumberId, accessToken };
   if (!phoneNumberId || !accessToken) {
-      if (!source) {
+      if (!source || !configurationId) {
         return res.status(400).json({ error: 'Either phoneNumberId and accessToken or Source and ConfigurationId must be provided' });
     }
     // Fetch access Token
@@ -322,7 +322,7 @@ const receiveMessage = async (req, res) => {
               formData.append("text", message.text.body);
               formData.append("type", message.type);
 
-              await axios.post("http://localhost/crm-live/crm/wa-server", formData, {
+              await axios.post("http://localhost/crm-live/wa-server", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
               });
             } catch (err) {
