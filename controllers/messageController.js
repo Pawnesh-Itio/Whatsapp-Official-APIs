@@ -269,13 +269,14 @@ const receiveMessage = async (req, res) => {
       for (const change of entry.changes) {
         if (change.field === "messages" && change.value.messages) {
           console.log(change);
-          const metadata = change.value.metadata[0];
+          const metadata = change.value.metadata;
           console.log(metadata);
           const message = change.value.messages[0];
           const contacts = change.value.contacts[0];
           // Add phonenumberid  to create contact
+          console.log(`Display Phone number: ${metadata.display_phone_number} Phone Number ID: ${metadata.phone_number_id}`);
           const contactToInsert = {
-            // phoneNumberId: metadata.phone_number_id,
+            phoneNumberId: metadata.phone_number_id,
             wa_name: contacts.profile.name,
             wa_phone_number: message.from,
             wa_id: contacts.wa_id,
