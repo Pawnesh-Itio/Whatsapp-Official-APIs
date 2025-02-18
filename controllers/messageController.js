@@ -312,7 +312,7 @@ const receiveMessage = async (req, res) => {
             const newContact = new contactData(contactToInsert);
             await newContact.save();
 
-            messageToInsert.phoneNumberId = metadata.phone_number_id;
+            messageToInsert.contactId = newContact._id;
             const newMessage = new messageModel(messageToInsert);
             await newMessage.save();
 
