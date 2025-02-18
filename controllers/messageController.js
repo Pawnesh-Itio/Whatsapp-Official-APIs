@@ -326,7 +326,7 @@ const receiveMessage = async (req, res) => {
               formData.append("text", message.text.body);
               formData.append("type", message.type);
 
-              await axios.post("http://localhost/crm-live/wa-server", formData, {
+              await axios.post("https://xeyso.com/crm/wa-server", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
               });
             } catch (err) {
