@@ -8,9 +8,9 @@ const fs = require('fs');
 const FormData = require('form-data');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
-    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, messageType, to, message, tempName,  caption, imageId} = req.body; // Required fields to send the message
+    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, contactName, messageType, to, message, tempName,  caption, imageId} = req.body; // Required fields to send the message
 
-    //Condition to check recipient number
+    //Condition to check recipient number 
     if (!to){
       return res.status(400).json({ error: 'Recipient number is required' });
     }
@@ -135,6 +135,10 @@ const sendMessage = async (req, res) => {
           type:ContactType,
           status: 1,
         };
+        // Add wa_name if exist
+        if(contactName){
+          contactToInsert.wa_name = contactName
+        }
         const newContact = new contactData(contactToInsert);
         await newContact.save();
         contactId = newContact._id;
@@ -293,7 +297,7 @@ const receiveMessage = async (req, res) => {
             message_content:1
           };
           // User PhoneNumberID as well to fetch contactData
-          const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number });
+          const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number,phoneNumberId: metadata.phone_number_id });
 
           if (findContactData) {
             // Add message for existing contact
@@ -308,7 +312,7 @@ const receiveMessage = async (req, res) => {
             const newContact = new contactData(contactToInsert);
             await newContact.save();
 
-            messageToInsert.contactId = newContact._id;
+            messageToInsert.phoneNumberId = metadata.phone_number_id;
             const newMessage = new messageModel(messageToInsert);
             await newMessage.save();
 

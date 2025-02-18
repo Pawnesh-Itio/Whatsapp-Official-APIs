@@ -5,6 +5,6 @@ const router = express.Router();
 
 // Route to send a message
 router.get('/list/:phoneNumberId/:type', chatList);
-router.get('/messages/:chatId/:phoneNumberId',messageList);
+router.get('/messages/:chatId/:phoneNumberId/:type',messageList);
 
 module.exports = router;

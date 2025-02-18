@@ -8,8 +8,9 @@ const chatList = async (req, res) =>{
           phoneNumberId:phoneNumberId,
           type:type
         }); 
+        console.log(type);
         if(contacts){
-        return res.status(200).json(contacts);
+          return res.status(200).json(contacts);
         }else{
           return res.status(401).json({ error: 'Contact not found' });
         }
@@ -19,11 +20,11 @@ const chatList = async (req, res) =>{
     }
 }
 const messageList = async (req, res) => {
-    const { chatId, phoneNumberId } = req.params;
+    const { chatId, phoneNumberId, type } = req.params;
   
     try {
       // fetch contact using chatId and phonenumberId there could be same number for two or more different phonenumbers
-      const findContactData = await contactData.findOne({ wa_phone_number: chatId });
+      const findContactData = await contactData.findOne({ wa_phone_number: chatId,phoneNumberId:phoneNumberId,type: type });
   
       if (findContactData) {
         const contactId = findContactData._id;
