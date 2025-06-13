@@ -242,7 +242,7 @@ const verifyWebhook = async (req, res) => {
 const {phoneNumberId} = req.params // Get user id from url parameters.
 const data = await configurationModel.findOne({ phoneNumberId: Number(phoneNumberId) });
   if(data){
-      Console.log(`Data found: ${data}`);
+      console.log(`Data found: ${data}`);
       const verificationToken = data.webhookVerificationToken;
       // MetaVerification
       const mode = req.query['hub.mode'];
