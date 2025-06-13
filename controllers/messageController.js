@@ -69,18 +69,31 @@ const sendMessage = async (req, res) => {
       if (!tempName) {
         return res.status(400).json({ error: 'Template name is required' });
       }
-      const TemplateMessagePayload = 
-      {
+      const TemplateMessagePayload = {
         messaging_product: 'whatsapp',
         to: to,
         type: 'template',
         template: {
-          name: tempName, // Template name
+          name: tempName,
           language: {
-            code: 'en', // Language code
+            code: 'en',
           },
-        },
+          components: [
+            {
+              type: 'header',
+              parameters: [
+                {
+                  type: 'image',
+                  image: {
+                    link: 'https://wa-business-api.onrender.com/uploads/pcl_hello.png' // Use actual HTTPS public link
+                  }
+                }
+              ]
+            }
+          ]
+        }
       };
+
       var sendPaylod = TemplateMessagePayload;
     }
 
