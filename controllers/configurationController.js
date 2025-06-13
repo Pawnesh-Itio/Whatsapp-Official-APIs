@@ -56,6 +56,34 @@ const getConfigurationDetailBySource = async (req, res) =>{
 
     }
 }
+const assignConfigurationToUser = async(req, res) =>{
+    const { id, newAssignTo} = req.body;
+    if(!id){
+        return res.status(404).json({message:"Configuration ID is missing!"});
+    }
+    if(!newAssignTo){
+        return res.status(404).json({message:"User ID is missing!"});
+    }
+    // Ensure newAssignTo is converted to a number
+    const valueToAdd = parseInt(newAssignTo, 10);
+    if (isNaN(valueToAdd)) {
+        return res.status(400).json({ error: 'Invalid value for assignTo' });
+    }
+    try{
+        const updateData = await configurationModel.findByIdAndUpdate(
+            id,
+            {
+                $addToSet:{assignTo:valueToAdd} // Add if `assignTo` exists prevent dublication
+            },
+            {
+                new: true // Return the updated document 
+            }
+        );
+        return res.status(201).json({success:true});
+    } catch (err){
+        return res.status(500).json({error:"Failed to assign user!"});
+    }
+}
 const deleteConfiguration = async (req, res) => {
     try {
         const { config_id } = req.params; // Get config_id from URL parameters
@@ -72,4 +100,4 @@ const deleteConfiguration = async (req, res) => {
     }
 };
 
-module.exports = { saveConfiguration,getConfigurationDetailBySource,deleteConfiguration };
+module.exports = { saveConfiguration,getConfigurationDetailBySource,deleteConfiguration, assignConfigurationToUser };

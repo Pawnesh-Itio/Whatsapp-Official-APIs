@@ -239,9 +239,10 @@ const uploadMedia = async(req, res) =>{
 }
 // Controller to handle webhook verification (GET)
 const verifyWebhook = async (req, res) => {
-  const {userId} = req.params // Get user id from url parameters.
-  const data = await configurationModel.findOne({userId});
+const {phoneNumberId} = req.params // Get user id from url parameters.
+const data = await configurationModel.findOne({ phoneNumberId: Number(phoneNumberId) });
   if(data){
+      Console.log(`Data found: ${data}`);
       const verificationToken = data.webhookVerificationToken;
       // MetaVerification
       const mode = req.query['hub.mode'];
@@ -249,6 +250,7 @@ const verifyWebhook = async (req, res) => {
       const challenge = req.query['hub.challenge'];
 
       if (mode && token === verificationToken) {
+        console.log('WEBHOOK_VERIFIED');
         res.status(200).send(challenge);
       } else {
         res.status(400).send('Forbidden');

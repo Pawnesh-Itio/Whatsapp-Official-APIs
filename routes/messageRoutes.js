@@ -21,10 +21,10 @@ const storage = multer.diskStorage({
 router.post('/send', sendMessage);
 
 // Route for webhook verification
-router.get('/webhook/:userId', verifyWebhook);
+router.get('/webhook/:phoneNumberId', verifyWebhook);
 
 // Route to receive messages from the webhook
-router.post('/webhook/:userId', receiveMessage);
+router.post('/webhook/:phoneNumberId', receiveMessage);
 
 // Route to upload media
 router.post('/upload',upload.single('file'), uploadMedia);
