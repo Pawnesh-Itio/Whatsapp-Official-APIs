@@ -8,7 +8,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
-    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, contactName, messageType, to, message, tempName,  caption, imageId} = req.body; // Required fields to send the message
+    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, contactName, messageType, to, message, tempName,  caption, mediaId} = req.body; // Required fields to send the message
 
     //Condition to check recipient number 
     if (!to){
@@ -100,27 +100,30 @@ const sendMessage = async (req, res) => {
     // Template Message Details Ended
 
     // Media message with caption or without started
-    if(messageType==4){
-      var ImagePayload;
-      if(caption){
-        ImagePayload= {
-          id:imageId,
-          caption:caption
-        }
-      }else{
-        ImagePayload= {
-          id:imageId
-        }
+    if (messageType == 4) {
+      const { mediaCategory } = req.body; // image | document | audio | video
+
+      if (!mediaId || !mediaCategory) {
+        return res.status(400).json({ error: 'mediaId and mediaCategory are required for media messages' });
       }
+
+      // Build media-specific payload
+      let mediaPayload = { id: mediaId };
+      if (caption && (mediaCategory === 'image' || mediaCategory === 'video' || mediaCategory === 'document')) {
+        mediaPayload.caption = caption;
+      }
+
       const MediaMessagePayload = {
-        messaging_product:'whatsapp',
-        to:to,
-        type:'image',
-        image:ImagePayload
-      }
+        messaging_product: 'whatsapp',
+        to: to,
+        type: mediaCategory,
+        [mediaCategory]: mediaPayload
+      };
+
       var sendPaylod = MediaMessagePayload;
     }
     // Media message with caption or without Ended
+    
   
     // WA-Official api hit with appropriate payload
     try {
@@ -183,7 +186,8 @@ const sendMessage = async (req, res) => {
         sent_by: userId
       }
       if(messageType==4){
-        messageToInsert.media_id = imageId;
+        messageToInsert.media_id = mediaId;
+        messageToInsert.media_type = mediaCategory;
       }
       const newMessage = new messageModel(messageToInsert);
       await newMessage.save();

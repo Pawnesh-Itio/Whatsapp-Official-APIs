@@ -23,6 +23,10 @@ const messageDataSchema = new mongoose.Schema({
     media_id:{
         type:Number
     },
+    media_type:{
+        type: String,
+        enum: ['image', 'video', 'audio', 'document', 'sticker'],
+    },
     time: {
         type: Number,
         required:true,
