@@ -8,7 +8,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
-    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, contactName, messageType, to, message, tempName,  caption, mediaId} = req.body; // Required fields to send the message
+    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, contactName, messageType, to, message, tempName,  caption, mediaId, mediaCategory} = req.body; // Required fields to send the message
 
     //Condition to check recipient number 
     if (!to){
@@ -101,7 +101,6 @@ const sendMessage = async (req, res) => {
 
     // Media message with caption or without started
     if (messageType == 4) {
-      const { mediaCategory } = req.body; // image | document | audio | video
 
       if (!mediaId || !mediaCategory) {
         return res.status(400).json({ error: 'mediaId and mediaCategory are required for media messages' });
