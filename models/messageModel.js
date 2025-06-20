@@ -37,7 +37,9 @@ const messageDataSchema = new mongoose.Schema({
         required: true,
         enum: ['sent', 'delivered', 'read', 'failed', 'deleted'],
         default: 'sent',
-    }
+    },
+    reply_to: { type: mongoose.Schema.Types.ObjectId, ref: 'Message', default: null }
+
   }, { timestamps: true });
   
   module.exports = mongoose.model('message',messageDataSchema);

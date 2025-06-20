@@ -9,7 +9,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
-    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, contactName, messageType, to, message, tempName,  caption, mediaId, mediaCategory} = req.body; // Required fields to send the message
+    const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, contactName, messageType, to, message, tempName,  caption, mediaId, mediaCategory,reply_to_message_id} = req.body; // Required fields to send the message
 
     //Condition to check recipient number 
     if (!to){
@@ -122,6 +122,9 @@ const sendMessage = async (req, res) => {
 
       var sendPaylod = MediaMessagePayload;
     }
+    if (reply_to_message_id) {
+      sendPaylod.reply_to_message_id = reply_to_message_id;
+    } 
     // Media message with caption or without Ended
     
   
@@ -188,6 +191,9 @@ const sendMessage = async (req, res) => {
       if(messageType==4){
         messageToInsert.media_id = mediaId;
         messageToInsert.media_type = mediaCategory;
+      }
+      if (reply_to_message_id) {
+         messageToInsert.reply_to = reply_to_message_id; // Add reply field
       }
       const newMessage = new messageModel(messageToInsert);
       await newMessage.save();
