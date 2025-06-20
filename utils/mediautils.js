@@ -6,7 +6,9 @@ const configurationModel = require("../models/configurationModel");
 
 const getMediaUrl = async (mediaId, phoneNumberId) => {
   const credentials = await configurationModel.findOne({ phoneNumberId });
+  console.log("Database Credentials:", credentials);
   const token = credentials?.accessToken;
+  console.log("Token:", token);
 
   const urlRes = await axios.get(`https://graph.facebook.com/v14.0/${mediaId}`, {
     headers: {
@@ -25,7 +27,11 @@ const getMediaUrl = async (mediaId, phoneNumberId) => {
   return { url: mediaUrl, mime_type: mimeRes.headers["content-type"], token };
 };
 
-const downloadMedia = async (url, mimeType, mediaId, token) => {
+const downloadMedia = async (url, mimeType, mediaId, phoneNumberId) => {
+  const credentials = await configurationModel.findOne({ phoneNumberId });
+  console.log("Database Credentials:", credentials);
+  const token = credentials?.accessToken;
+  console.log("Token:", token);
   const ext = mimeType.split("/")[1].split(";")[0];
   const fileName = `${mediaId}.${ext}`;
   const savePath = path.join(__dirname, `../uploads/${fileName}`);

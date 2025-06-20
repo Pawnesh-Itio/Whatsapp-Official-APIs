@@ -337,7 +337,7 @@ const receiveMessage = async (req, res) => {
               case "audio":
                 const mediaId = message[message.type].id; // Assuming media ID is used to fetch
                 const mediaUrl = await getMediaUrl(mediaId, phoneNumberId);
-                const savedPath = await downloadMedia(mediaUrl.url, mediaUrl.mime_type, mediaId);
+                const savedPath = await downloadMedia(mediaUrl.url, mediaUrl.mime_type, mediaId, phoneNumberId);
                 console.log("Media downloaded to Case 4:", savedPath);
                 //Save media record
                 const mediaRecord = new mediaModel({
