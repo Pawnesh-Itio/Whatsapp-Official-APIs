@@ -363,6 +363,10 @@ const receiveMessage = async (req, res) => {
 
             const newMessage = new messageModel(messageContentToInsert);
             await newMessage.save();
+            if(message.type == "image" || message.type == "video" || message.type == "document" || message.type == "audio"){
+              messageContentToInsert.media_path = savedPath;
+              messageContentToInsert.media_type = mediaUrl.mime_type;
+            }
 
             const io = req.app.get("io");
             io.emit("chat-" + message.from, { messageContentToInsert, type: "received" });
