@@ -339,6 +339,7 @@ const receiveMessage = async (req, res) => {
                 const mediaUrl = await getMediaUrl(mediaId, phoneNumberId);
                 const savedPath = await downloadMedia(mediaUrl.url, mediaUrl.mime_type, mediaId, phoneNumberId);
                 console.log("Media downloaded to Case 4:", savedPath);
+                mediaPath = savedPath;
                 //Save media record
                 const mediaRecord = new mediaModel({
                   path: savedPath,
@@ -364,7 +365,7 @@ const receiveMessage = async (req, res) => {
             const newMessage = new messageModel(messageContentToInsert);
             await newMessage.save();
             if(message.type == "image" || message.type == "video" || message.type == "document" || message.type == "audio"){
-              messageContentToInsert.media_path = savedPath;
+              messageContentToInsert.media_path = mediaPath;
               messageContentToInsert.media_type = mediaUrl.mime_type;
             }
 
