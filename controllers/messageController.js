@@ -322,6 +322,7 @@ const receiveMessage = async (req, res) => {
             messageToInsert.contactId = findContactData._id;
             let messageContentToInsert = {};
             let mediaPath = "";
+            let responseMimeType = "";
             switch (message.type) {
               case "text":
                 messageContentToInsert = {
@@ -340,6 +341,7 @@ const receiveMessage = async (req, res) => {
                 const savedPath = await downloadMedia(mediaUrl.url, mediaUrl.mime_type, mediaId, phoneNumberId);
                 console.log("Media downloaded to Case 4:", savedPath);
                 mediaPath = savedPath;
+                responseMimeType = mediaUrl.mime_type;
                 //Save media record
                 const mediaRecord = new mediaModel({
                   path: savedPath,
@@ -366,7 +368,7 @@ const receiveMessage = async (req, res) => {
             await newMessage.save();
             if(message.type == "image" || message.type == "video" || message.type == "document" || message.type == "audio"){
               messageContentToInsert.media_path = mediaPath;
-              messageContentToInsert.media_type = mediaUrl.mime_type;
+              messageContentToInsert.media_type = responseMimeType;
             }
 
             const io = req.app.get("io");
