@@ -296,6 +296,7 @@ const receiveMessage = async (req, res) => {
           console.log(metadata);
           const message = change.value.messages[0];
           const contacts = change.value.contacts[0];
+          const phoneNumberId = metadata.phone_number_id;
           // Add phonenumberid  to create contact
           console.log(`Display Phone number: ${metadata.display_phone_number} Phone Number ID: ${metadata.phone_number_id}`);
           const contactToInsert = {
