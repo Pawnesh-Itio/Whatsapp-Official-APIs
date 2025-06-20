@@ -13,8 +13,10 @@ const mediaSchema = new mongoose.Schema({
         required:true
       },
       user_id:{
-        type:Number,
-        required:true
+        type:Number
+      },
+      media_url: {
+        type: String,
       },
       status: {
                 type: Number,

@@ -3,6 +3,7 @@ const configurationModel = require('../models/configurationModel');
 const contactData = require('../models/contactModel');
 const messageModel = require('../models/messageModel');
 const mediaModel = require('../models/mediaModel');
+const { getMediaUrl, downloadMedia } = require("../utils/mediautils");
 const { json } = require('body-parser');
 const fs = require('fs');
 const FormData = require('form-data');
@@ -309,10 +310,8 @@ const receiveMessage = async (req, res) => {
           const messageToInsert = {
             message_id: message.id,
             message_type: "received",
-            message_body: message.text.body,
             time: message.timestamp,
-            status: "sent",
-            message_content:1
+            status: "sent"
           };
           // User PhoneNumberID as well to fetch contactData
           const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number,phoneNumberId: metadata.phone_number_id });
@@ -320,11 +319,52 @@ const receiveMessage = async (req, res) => {
           if (findContactData) {
             // Add message for existing contact
             messageToInsert.contactId = findContactData._id;
-            const newMessage = new messageModel(messageToInsert);
+            let messageContentToInsert = {};
+            let mediaPath = "";
+            switch (message.type) {
+              case "text":
+                messageContentToInsert = {
+                  ...messageToInsert,
+                  message_content: 1,
+                  message_body: message.text.body,
+                };
+                console.log("Text message received Case 1:", message.text.body);
+                break;
+              case "image":
+              case "video":
+              case "document":
+              case "audio":
+                const mediaId = message[message.type].id; // Assuming media ID is used to fetch
+                const mediaUrl = await getMediaUrl(mediaId, phoneNumberId);
+                const savedPath = await downloadMedia(mediaUrl.url, mediaUrl.mime_type, mediaId);
+                console.log("Media downloaded to Case 4:", savedPath);
+                //Save media record
+                const mediaRecord = new mediaModel({
+                  path: savedPath,
+                  mime_type: mediaUrl.mime_type,
+                  media_id: mediaId,
+                  media_url: mediaUrl.url,
+                  status: 1,
+                });
+                await mediaRecord.save();
+                messageContentToInsert = {
+                  ...messageToInsert,
+                  message_content: 4,
+                  message_body: message[message.type].caption || "",
+                  media_id: mediaId,
+                  media_type: message.type,
+                };
+                break;
+                default:
+                  console.log("Unsupported message type:", message.type);
+                  continue; // Skip unsupported message types
+            }
+
+            const newMessage = new messageModel(messageContentToInsert);
             await newMessage.save();
 
             const io = req.app.get("io");
-            io.emit("chat-" + message.from, { messageToInsert, type: "received" });
+            io.emit("chat-" + message.from, { messageContentToInsert, type: "received" });
           } else {
             // Create new contact and add message
             const newContact = new contactData(contactToInsert);
