@@ -34,7 +34,7 @@ const downloadMedia = async (url, mimeType, mediaId, phoneNumberId) => {
   console.log("Token:", token);
   const ext = mimeType.split("/")[1].split(";")[0];
   const fileName = `${mediaId}.${ext}`;
-  const savePath = path.join(__dirname, `../uploads/${fileName}`);
+  const savePath =  `/uploads/${fileName}`;
   const writer = fs.createWriteStream(savePath);
 
   const response = await axios.get(url, {
