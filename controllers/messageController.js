@@ -387,6 +387,7 @@ const receiveMessage = async (req, res) => {
             await newContact.save();
 
             messageToInsert.contactId = newContact._id;
+            messageToInsert.message_content = 1; // Assuming text message for new contact
             const newMessage = new messageModel(messageToInsert);
             await newMessage.save();
 
