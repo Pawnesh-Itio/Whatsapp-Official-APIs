@@ -1,4 +1,5 @@
-// utils/logger.js
+// utils/whatsappLogger.js
+
 const { createLogger, format, transports } = require('winston');
 
 const whatsappLogger = createLogger({
@@ -10,9 +11,9 @@ const whatsappLogger = createLogger({
     )
   ),
   transports: [
-    new transports.File({ filename: 'logs/whatsappError.log', level: 'error' }), // Errors
-    new transports.File({ filename: 'logs/whatsappCombined.log' }),               // All logs
+    new transports.File({ filename: 'logs/whatsapp-error.log', level: 'error' }),
+    new transports.File({ filename: 'logs/whatsapp-combined.log' }),
   ],
 });
 
-module.exports = whatsappLogger;
+module.exports = { whatsappLogger };
