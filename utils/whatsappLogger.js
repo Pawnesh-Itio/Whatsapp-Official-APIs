@@ -1,0 +1,18 @@
+// utils/logger.js
+const { createLogger, format, transports } = require('winston');
+
+const whatsappLogger = createLogger({
+  level: 'info',
+  format: format.combine(
+    format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    format.printf(
+      (info) => `[${info.timestamp}] ${info.level.toUpperCase()}: ${info.message}`
+    )
+  ),
+  transports: [
+    new transports.File({ filename: 'logs/whatsappError.log', level: 'error' }), // Errors
+    new transports.File({ filename: 'logs/whatsappCombined.log' }),               // All logs
+  ],
+});
+
+module.exports = whatsappLogger;

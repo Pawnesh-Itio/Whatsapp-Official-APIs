@@ -7,6 +7,7 @@ const { getMediaUrl, downloadMedia } = require("../utils/mediautils");
 const { json } = require('body-parser');
 const fs = require('fs');
 const FormData = require('form-data');
+const {whatsappLogger} = require('../utils/whatsappLogger');
 // Controller to send WhatsApp messages
 const sendMessage = async (req, res) => {
     const {userId, phoneNumberId, accessToken, source, configurationId, ContactType, contactName, messageType, to, message, tempName,  caption, mediaId, mediaCategory,reply_to_message_id} = req.body; // Required fields to send the message
@@ -265,22 +266,27 @@ const uploadMedia = async(req, res) =>{
 // Controller to handle webhook verification (GET)
 const verifyWebhook = async (req, res) => {
 const {phoneNumberId} = req.params // Get user id from url parameters.
+whatsappLogger.info(`Incoming webhook verification request for phoneNumberId: ${phoneNumberId}`);
 const data = await configurationModel.findOne({ phoneNumberId: Number(phoneNumberId) });
   if(data){
-      console.log(`Data found: ${data}`);
+      whatsappLogger.info(`Configuration found for phoneNumberId: ${phoneNumberId}`);
+      whatsappLogger.debug(`Configuration details: ${JSON.stringify(data)}`);
       const verificationToken = data.webhookVerificationToken;
       // MetaVerification
       const mode = req.query['hub.mode'];
       const token = req.query['hub.verify_token'];
       const challenge = req.query['hub.challenge'];
-
+      whatsappLogger.info(`Webhook verification request - Mode: ${mode}, Token: ${token}, Challenge: ${challenge}`);
       if (mode && token === verificationToken) {
+        whatsappLogger.info('Webhook successfully verified');
         console.log('WEBHOOK_VERIFIED');
         res.status(200).send(challenge);
       } else {
+        whatsappLogger.error('Webhook verification failed: Invalid token or mode');
         res.status(400).send('Forbidden');
       }
   }else{
+      whatsappLogger.warn(`No configuration found for phoneNumberId: ${phoneNumberId}`);
       return res.status(400).json({ message: 'Data not found' });
   }
 };
