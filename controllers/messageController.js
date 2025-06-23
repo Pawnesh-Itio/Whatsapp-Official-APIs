@@ -382,13 +382,16 @@ const receiveMessage = async (req, res) => {
             const io = req.app.get("io");
             io.emit("chat-" + message.from, { messageContentToInsert, type: "received" });
           } else {
+           let messageContentToInsert = {
+              ...messageToInsert, 
+              message_content: 1,        
+              message_body: message.text.body, 
+            }
+            
             // Create new contact and add message
             const newContact = new contactData(contactToInsert);
             await newContact.save();
-
-            messageToInsert.contactId = newContact._id;
-            messageToInsert.message_content = 1; // Assuming text message for new contact
-            const newMessage = new messageModel(messageToInsert);
+            const newMessage = new messageModel(messageContentToInsert);
             await newMessage.save();
 
             // Sending POST request to external API
