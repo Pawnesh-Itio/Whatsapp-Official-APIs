@@ -56,6 +56,10 @@ app.set('io', io); // This allows access to io in your routes/controllers
 
 // Routes
 // Serve static files from the 'uploads' folder
+// Test api endpoint for root url 
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/messages', messageRoutes);
 app.use('/api/chat', chatRoutes);
