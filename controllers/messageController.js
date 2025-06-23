@@ -399,7 +399,7 @@ const receiveMessage = async (req, res) => {
               formData.append("timestamp", message.timestamp);
               formData.append("text", message.text.body);
               formData.append("type", message.type);
-
+              console.log("Sending data to external API:", formData);
               await axios.post("https://paycly.com/my/wa-server", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
               });
