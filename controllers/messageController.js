@@ -330,7 +330,7 @@ const receiveMessage = async (req, res) => {
           };
           // User PhoneNumberID as well to fetch contactData
           const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number,phoneNumberId: metadata.phone_number_id });
-
+          console.log("Contact Data found:", findContactData);
           if (findContactData) {
             // Add message for existing contact
             messageToInsert.contactId = findContactData._id;
