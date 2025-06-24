@@ -203,7 +203,7 @@ const sendMessage = async (req, res) => {
       // Message Creation Ended
 
       // Return response
-      return res.status(200).json({ success: true, data: response.data, type: messageType});
+      return res.status(200).json({ success: true, data: response.data, type: messageType, category: mediaCategory, time:messageToInsert.time});
 
     } catch (error) {
       console.error('Error sending message:', error.response ? error.response.data : error.message);
