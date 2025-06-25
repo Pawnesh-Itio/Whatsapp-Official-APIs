@@ -1,24 +1,69 @@
 const contactData = require('../models/contactModel');
 const messageModel = require('../models/messageModel');
-const chatList = async (req, res) =>{ 
+const chatList = async (req, res) => {
   const { phoneNumberId, type } = req.params;
-    try {
-      // Fetch contact data using phoneNumberId
-        const contacts = await contactData.find({
-          phoneNumberId:phoneNumberId,
-          type:type
-        }); 
-        console.log(type);
-        if(contacts){
-          return res.status(200).json(contacts);
-        }else{
-          return res.status(401).json({ error: 'Contact not found' });
+
+  try {
+    const contactsWithLastMessage = await contactData.aggregate([
+      {
+        $match: {
+          phoneNumberId: Number(phoneNumberId),
+          type: type
         }
-    } catch (error) {
-        console.error('Error fetching contacts:', error);
-        res.status(500).json({ error: 'An error occurred while fetching contacts' });
-    }
-}
+      },
+      {
+        $lookup: {
+          from: "messages",
+          localField: "_id",
+          foreignField: "contactId",
+          as: "messages"
+        }
+      },
+      {
+        $addFields: {
+          lastMessage: {
+            $arrayElemAt: [
+              {
+                $slice: [
+                  {
+                    $filter: {
+                      input: "$messages",
+                      as: "msg",
+                      cond: { $ne: ["$$msg.status", "deleted"] }
+                    }
+                  },
+                  -1
+                ]
+              },
+              0
+            ]
+          }
+        }
+      },
+      {
+        $sort: {
+          "lastMessage.time": -1
+        }
+      },
+      {
+        $project: {
+          lastMessage:{
+            contactId:0,
+            message_body: 1,
+            time: 1
+          }
+          
+        }
+      }
+    ]);
+
+    return res.status(200).json(contactsWithLastMessage);
+  } catch (error) {
+    console.error("Error fetching contacts:", error);
+    res.status(500).json({ error: "An error occurred while fetching contacts" });
+  }
+};
+
 const messageList = async (req, res) => {
     const { chatId, phoneNumberId, type } = req.params;
   
