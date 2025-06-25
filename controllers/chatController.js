@@ -44,16 +44,6 @@ const chatList = async (req, res) => {
         $sort: {
           "lastMessage.time": -1
         }
-      },
-      {
-        $project: {
-          lastMessage:{
-            contactId:0,
-            message_body: 1,
-            time: 1
-          }
-          
-        }
       }
     ]);
 
