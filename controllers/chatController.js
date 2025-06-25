@@ -4,6 +4,9 @@ const chatList = async (req, res) => {
   const { phoneNumberId, type } = req.params;
 
   try {
+    console.log("Fetching chat list for phoneNumberId:", phoneNumberId, "and type:", type);
+    const contacts = await contactData.find({ phoneNumberId, type });
+    console.log("Matching Contacts:", contacts);
     const contactsWithLastMessage = await contactData.aggregate([
       {
         $match: {
@@ -35,6 +38,7 @@ const chatList = async (req, res) => {
         }
       }
     ]);
+    console.log("Contacts with last message:", contactsWithLastMessage);
 
     res.status(200).json(contactsWithLastMessage);
   } catch (error) {
