@@ -21,23 +21,6 @@ const chatList = async (req, res) => {
       },
       {
         $addFields: {
-          lastMessage: {
-            $arrayElemAt: [
-              {
-                $slice: [
-                  {
-                    $filter: {
-                      input: "$messages",
-                      as: "msg",
-                      cond: { $ne: ["$$msg.message_body", null] } // optional filter to skip empty message_body
-                    }
-                  },
-                  -1
-                ]
-              },
-              0
-            ]
-          },
           lastMessageTime: { $max: "$messages.time" }
         }
       },
