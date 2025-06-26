@@ -418,6 +418,7 @@ const receiveMessage = async (req, res) => {
             }
           }
         } else if (change.field === "statuses") {
+          console.log("Status change detected:", change.value.statuses[0]);
           // Handle message status updates
           const statusData = change.value.statuses[0];
           const messageId = statusData.id;
