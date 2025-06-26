@@ -414,36 +414,25 @@ const receiveMessage = async (req, res) => {
             }
           }
         } else if (change.field === "messages" && change.value.statuses) {
-          console.log("Status change detected:", change.value.statuses[0]);
-          
-          // // Handle message status updates
-          // const statusData = change.value.statuses[0];
-          // const messageId = statusData.id;
-          // const statusKey = `${messageId}-${statusData.status}`;
-
-          // if (!processedStatuses.has(statusKey)) {
-          //   processedStatuses.add(statusKey);
-
-          //   const io = req.app.get("io");
-          //   io.emit("chat-" + statusData.recipient_id, {
-          //     messageId,
-          //     status: statusData.status,
-          //     type: "status",
-          //   });
-
-          //   // Update message status in the database
-          //   const findMessageData = await messageModel.findOne({ message_id: messageId });
-          //   if (findMessageData && findMessageData.status !== statusData.status) {
-          //     await messageModel.updateOne(
-          //       { message_id: messageId },
-          //       { $set: { status: statusData.status, conversation_id: statusData.conversation?.id || null } }
-          //     );
-          //   }
-
-          //   setTimeout(() => processedStatuses.delete(statusKey), 60000); // Cleanup
-          // } else {
-          //   console.log("Duplicate status update ignored:", statusKey);
-          // }
+          //Handle message status updates
+          const statusData = change.value.statuses[0];
+          const messageId = statusData.id;
+          const statusKey = `${messageId}-${statusData.status}`;
+          const recipientId = statusData.recipient_id;
+          const io = req.app.get("io");
+          io.emit("chat-" + recipientId, {
+            messageId,
+            status: statusData.status,
+            type: "status",
+          });
+            //Update message status in the database
+            const findMessageData = await messageModel.findOne({ message_id: messageId });
+            if (findMessageData && findMessageData.status != statusData.status) {
+              await messageModel.updateOne(
+                { message_id: messageId },
+                { $set: { status: statusData.status, conversation_id: statusData.conversation?.id || null } }
+              );
+            }
         }
       }
     }
