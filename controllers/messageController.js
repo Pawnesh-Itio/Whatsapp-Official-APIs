@@ -300,19 +300,16 @@ const receiveMessage = async (req, res) => {
   if (data.object !== "whatsapp_business_account") {
     return res.sendStatus(400); // Invalid data format
   }
-
+  console.log("Received data:", JSON.stringify(data, null, 2)); // Log the incoming data for debugging
   try {
     for (const entry of data.entry) {
       for (const change of entry.changes) {
         if (change.field === "messages" && change.value.messages) {
-          console.log(change);
           const metadata = change.value.metadata;
-          console.log(metadata);
           const message = change.value.messages[0];
           const contacts = change.value.contacts[0];
           const phoneNumberId = metadata.phone_number_id;
           // Add phonenumberid  to create contact
-          console.log(`Display Phone number: ${metadata.display_phone_number} Phone Number ID: ${metadata.phone_number_id}`);
           const contactToInsert = {
             phoneNumberId: metadata.phone_number_id,
             wa_name: contacts.profile.name,
@@ -330,7 +327,6 @@ const receiveMessage = async (req, res) => {
           };
           // User PhoneNumberID as well to fetch contactData
           const findContactData = await contactData.findOne({ wa_phone_number: contactToInsert.wa_phone_number,phoneNumberId: metadata.phone_number_id });
-          console.log("Contact Data found:", findContactData);
           if (findContactData) {
             // Add message for existing contact
             messageToInsert.contactId = findContactData._id;
