@@ -307,7 +307,7 @@ const receiveMessage = async (req, res) => {
         if (change.field === "messages" && change.value.messages) {
           const metadata = change.value.metadata;
           const message = change.value.messages[0];
-          const contacts = change.value.contacts[0];
+          const contacts = change.value.contacts  [0];
           const phoneNumberId = metadata.phone_number_id;
           // Add phonenumberid  to create contact
           const contactToInsert = {
@@ -413,36 +413,37 @@ const receiveMessage = async (req, res) => {
               console.error("Error sending data to external API:", err);
             }
           }
-        } else if (change.field === "statuses") {
+        } else if (change.field === "messages" && change.value.statuses) {
           console.log("Status change detected:", change.value.statuses[0]);
-          // Handle message status updates
-          const statusData = change.value.statuses[0];
-          const messageId = statusData.id;
-          const statusKey = `${messageId}-${statusData.status}`;
+          
+          // // Handle message status updates
+          // const statusData = change.value.statuses[0];
+          // const messageId = statusData.id;
+          // const statusKey = `${messageId}-${statusData.status}`;
 
-          if (!processedStatuses.has(statusKey)) {
-            processedStatuses.add(statusKey);
+          // if (!processedStatuses.has(statusKey)) {
+          //   processedStatuses.add(statusKey);
 
-            const io = req.app.get("io");
-            io.emit("chat-" + statusData.recipient_id, {
-              messageId,
-              status: statusData.status,
-              type: "status",
-            });
+          //   const io = req.app.get("io");
+          //   io.emit("chat-" + statusData.recipient_id, {
+          //     messageId,
+          //     status: statusData.status,
+          //     type: "status",
+          //   });
 
-            // Update message status in the database
-            const findMessageData = await messageModel.findOne({ message_id: messageId });
-            if (findMessageData && findMessageData.status !== statusData.status) {
-              await messageModel.updateOne(
-                { message_id: messageId },
-                { $set: { status: statusData.status, conversation_id: statusData.conversation?.id || null } }
-              );
-            }
+          //   // Update message status in the database
+          //   const findMessageData = await messageModel.findOne({ message_id: messageId });
+          //   if (findMessageData && findMessageData.status !== statusData.status) {
+          //     await messageModel.updateOne(
+          //       { message_id: messageId },
+          //       { $set: { status: statusData.status, conversation_id: statusData.conversation?.id || null } }
+          //     );
+          //   }
 
-            setTimeout(() => processedStatuses.delete(statusKey), 60000); // Cleanup
-          } else {
-            console.log("Duplicate status update ignored:", statusKey);
-          }
+          //   setTimeout(() => processedStatuses.delete(statusKey), 60000); // Cleanup
+          // } else {
+          //   console.log("Duplicate status update ignored:", statusKey);
+          // }
         }
       }
     }
