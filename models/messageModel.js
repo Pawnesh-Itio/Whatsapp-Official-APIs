@@ -38,7 +38,7 @@ const messageDataSchema = new mongoose.Schema({
         enum: ['sent', 'delivered', 'read', 'failed', 'deleted'],
         default: 'sent',
     },
-    reply_to: { type: mongoose.Schema.Types.ObjectId, ref: 'Message', default: null }
+    reply_to: { type: String, default: null }
 
   }, { timestamps: true });
   
