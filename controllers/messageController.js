@@ -389,6 +389,26 @@ const receiveMessage = async (req, res) => {
             io.emit("whatsapp:new_message",{
               leadPhoneNumber: message.from,
             });
+
+            // Sending POST request to external API
+            try {
+              const formData = new FormData();
+              formData.append("type", 2);
+              formData.append("message_type", message.type);
+              formData.append("name", contacts.profile.name);
+              formData.append("from", message.from);
+              formData.append("id", message.id);
+              formData.append("timestamp", message.timestamp);
+              formData.append("text", message.text.body);
+              formData.append("type", message.type);
+              console.log("Sending data to external API:", formData);
+              await axios.post("https://xeyso.com/crm/wa-server", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+              });
+            } catch (err) {
+              console.error("Error sending data to external API:", err);
+            }
+
           } else {
            let messageContentToInsert = {
               ...messageToInsert, 
@@ -405,6 +425,7 @@ const receiveMessage = async (req, res) => {
             // Sending POST request to external API
             try {
               const formData = new FormData();
+              formData.append("type", 1);
               formData.append("name", contacts.profile.name);
               formData.append("from", message.from);
               formData.append("id", message.id);
@@ -412,7 +433,7 @@ const receiveMessage = async (req, res) => {
               formData.append("text", message.text.body);
               formData.append("type", message.type);
               console.log("Sending data to external API:", formData);
-              await axios.post("https://paycly.com/my/wa-server", formData, {
+              await axios.post("https://xeyso.com/crm/wa-server", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
               });
             } catch (err) {
