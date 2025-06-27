@@ -400,7 +400,6 @@ const receiveMessage = async (req, res) => {
               formData.append("id", message.id);
               formData.append("timestamp", message.timestamp);
               formData.append("text", message.text.body);
-              formData.append("type", message.type);
               console.log("Sending data to external API:", formData);
               await axios.post("https://xeyso.com/crm/wa-server", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
