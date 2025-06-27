@@ -196,7 +196,7 @@ const sendMessage = async (req, res) => {
       if(messageType==4){
         messageToInsert.media_id = mediaId;
         messageToInsert.media_type = mediaCategory;
-      }
+      } 
       if (reply_to_message_id) {
          messageToInsert.reply_to = reply_to_message_id; // Add reply field
       }
@@ -307,6 +307,7 @@ const receiveMessage = async (req, res) => {
     for (const entry of data.entry) {
       for (const change of entry.changes) {
         if (change.field === "messages" && change.value.messages) {
+
           const metadata = change.value.metadata;
           const message = change.value.messages[0];
           const contacts = change.value.contacts  [0];
@@ -385,6 +386,9 @@ const receiveMessage = async (req, res) => {
 
             const io = req.app.get("io");
             io.emit("chat-" + message.from, { messageContentToInsert, type: "received" });
+            io.emit("whatsapp:new_message",{
+              leadPhoneNumber: message.from,
+            });
           } else {
            let messageContentToInsert = {
               ...messageToInsert, 
