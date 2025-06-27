@@ -124,7 +124,9 @@ const sendMessage = async (req, res) => {
       var sendPaylod = MediaMessagePayload;
     }
     if (reply_to_message_id) {
-      sendPaylod.reply_to_message_id = reply_to_message_id;
+      sendPaylod.context = {
+          message_id: reply_to_message_id
+      };
       console.log("Reply to message ID:", reply_to_message_id);
       console.log("Payload with reply:", sendPaylod);
     } 
