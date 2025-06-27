@@ -66,23 +66,38 @@ const messageList = async (req, res) => {
   
         const messages = await messageModel.aggregate([
           {
-            $match: { contactId: contactId } // Match messages for the contact
+            $match: { contactId: contactId }
           },
           {
             $lookup: {
-              from: 'media', // Name of the media collection
-              localField: 'media_id', // Field in the message collection
-              foreignField: 'media_id', // Field in the media collection
-              as: 'media_details' // Alias for the media details array
+              from: 'media',
+              localField: 'media_id',
+              foreignField: 'media_id',
+              as: 'media_details'
             }
           },
           {
             $unwind: {
-              path: '$media_details', // Unwind the media details array to get a single object
-              preserveNullAndEmptyArrays: true // Preserve messages without media details
+              path: '$media_details',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $lookup: {
+              from: 'messages', // Self-lookup in the same collection
+              localField: 'reply_to',
+              foreignField: 'message_id', // Matching WhatsApp message_id
+              as: 'replied_message'
+            }
+          },
+          {
+            $unwind: {
+              path: '$replied_message',
+              preserveNullAndEmptyArrays: true
             }
           }
         ]);
+
   
         if (messages.length > 0) {
           return res.status(200).json({
