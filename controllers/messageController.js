@@ -79,20 +79,7 @@ const sendMessage = async (req, res) => {
           name: tempName,
           language: {
             code: 'en',
-          },
-          components: [
-            {
-              type: 'header',
-              parameters: [
-                {
-                  type: 'image',
-                  image: {
-                    link: 'https://wa-business-api.onrender.com/uploads/pcl_hello.png' // Use actual HTTPS public link
-                  }
-                }
-              ]
-            }
-          ]
+          }
         }
       };
 
