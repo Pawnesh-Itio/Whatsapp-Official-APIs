@@ -78,7 +78,7 @@ const sendMessage = async (req, res) => {
         template: {
           name: tempName,
           language: {
-            code: 'en',
+            code: 'en_US',
           }
         }
       };
