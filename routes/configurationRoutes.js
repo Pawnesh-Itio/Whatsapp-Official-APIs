@@ -7,6 +7,6 @@ const router = express.Router();
 // Route to Save configuration details
 router.post('/save', saveConfiguration);
 router.post('/assign/user',assignConfigurationToUser);
-router.get('/fetch/:source',getConfigurationDetailBySource);
+router.post('/fetch/',getConfigurationDetailBySource);
 router.delete('/delete/:config_id', deleteConfiguration);
 module.exports = router;

@@ -47,13 +47,29 @@ const saveConfiguration = async (req, res) =>{
 }
 }
 const getConfigurationDetailBySource = async (req, res) =>{
-    const {source} = req.params // Get user id from url parameters.
+    const {source, userType, companyId} = req.body // Get user id from url parameters.
     try{
-        const data = await configurationModel.find({source});
-        if(data){
-            return res.status(200).json(data);
-        }else{
+        if(!source){
+            return res.status(400).json({ message: 'Source is required' });
+        }
+        if(userType && userType === 3){
             return res.status(400).json({ message: 'Data not found' });
+        }
+        if(userType && userType == 1){
+            const data = await configurationModel.find({source});
+                if(data){
+                    return res.status(200).json(data);
+                }else{
+                    return res.status(400).json({ message: 'Data not found' });
+                }
+        }
+        if(userType && userType == 2 && companyId){
+            const data = await configurationModel.find({source, companyId});
+                if(data){
+                    return res.status(200).json(data);
+                }else{
+                    return res.status(400).json({ message: 'Data not found' });
+                }
         }
     } catch (error){
 
