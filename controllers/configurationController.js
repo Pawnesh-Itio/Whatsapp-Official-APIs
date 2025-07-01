@@ -52,9 +52,6 @@ const getConfigurationDetailBySource = async (req, res) =>{
         if(!source){
             return res.status(400).json({ message: 'Source is required' });
         }
-        if(userType && userType === 3){
-            return res.status(400).json({ message: 'Data not found' });
-        }
         if(userType && userType == 1){
             const data = await configurationModel.find({source});
                 if(data){
@@ -63,7 +60,7 @@ const getConfigurationDetailBySource = async (req, res) =>{
                     return res.status(400).json({ message: 'Data not found' });
                 }
         }
-        if(userType && userType == 2 && companyId){
+        if((userType == 2 || userType == 3) && companyId){
             const data = await configurationModel.find({source, companyId});
                 if(data){
                     return res.status(200).json(data);
