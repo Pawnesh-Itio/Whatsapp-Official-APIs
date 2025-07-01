@@ -2,7 +2,7 @@ const configurationModel = require('../models/configurationModel');
 
 const saveConfiguration = async (req, res) =>{
     try {
-    const {accessToken, phoneNumber, phoneNumberId,department,staffId, webhookVerificationToken, source, config_id} = req.body;
+    const {accessToken, phoneNumber, phoneNumberId,department,staffId, webhookVerificationToken, source, config_id, companyId} = req.body;
     //Check if a record of same user exist, then update or insert.
     const updateValues = {
         accessToken,
@@ -18,6 +18,9 @@ const saveConfiguration = async (req, res) =>{
     if(staffId){
         updateValues.type = "Staff";
         updateValues.staffId = staffId;
+    }
+    if(companyId){
+        updateValues.companyId = companyId;
     }
     if(department=="0" && !staffId){
         updateValues.type = "Selective";
