@@ -14,7 +14,7 @@ const configurationSchema = new mongoose.Schema({
     phoneNumberId:{type: Number, required: true},// phonenumber Id from meta
     phoneNumber:{type:Number, required:true},// phoneNumber from meta
     webhookVerificationToken:{type:String, required: true},//webhookVerification from meta
-    companyId:{type:Number, required:true},//companyId from meta
+    companyId:{type:Number, required:false},//companyId from meta
 });
 
 module.exports = mongoose.model('Configuration',configurationSchema);
